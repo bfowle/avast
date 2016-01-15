@@ -1,19 +1,23 @@
-<h3>Datacenters</h3>
-<div class="grid grid-pad">
-  <div *ngFor="#dc of datacenters" class="col-1-4" (click)="setDatacenter(dc)">
-    <div class="module">
-      <h4>{{dc}}</h4>
+<div *ngIf="isFetchingDatacenters">Loading datacenters...</div>
+<div *ngIf="datacenters?.length">
+  <h3>Datacenters</h3>
+  <div class="grid grid-pad">
+    <div *ngFor="#dc of datacenters" class="col-1-4" (click)="selectDatacenter(dc)">
+      <div class="module">
+        <h4>{{dc}}</h4>
+      </div>
     </div>
   </div>
 </div>
 
-<div *ngIf="nodes">
+<div *ngIf="isFetchingNodes">Loading nodes...</div>
+<div *ngIf="nodes?.length">
   <h3>Nodes</h3>
   <div class="grid grid-pad">
-    <div *ngFor="#n of nodes" class="col-1-4" (click)="gotoNode(n.node)">
+    <div *ngFor="#dcn of nodes" class="col-1-4" (click)="gotoNode(dcn.node)">
       <div class="module">
-        <h4>{{n.node}}</h4>
-        <h6>{{n.address}}</h6>
+        <h4>{{dcn.node}}</h4>
+        <h6>{{dcn.address}}</h6>
       </div>
     </div>
   </div>

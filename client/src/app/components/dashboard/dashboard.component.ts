@@ -3,7 +3,6 @@ import {Router} from 'angular2/router';
 import {AppStore} from 'angular2-redux';
 
 import {ConsulActions} from '../../actions/consul.actions';
-import {ConsulService} from '../consul/providers/consul.service';
 import {SwarmNode} from '../nodes/interfaces/swarm-node';
 
 @Component({
@@ -16,28 +15,33 @@ import {SwarmNode} from '../nodes/interfaces/swarm-node';
 
 export class DashboardComponent implements OnInit {
   public datacenters: string[] = [];
-  public nodes: SwarmNode[];
-  private isFetchingDatacenters = false;
-  private isFetchingNodes = false;
+  public currentDatacenter: string = ''; // @TODO: select first dc on load
+  public nodes: SwarmNode[] = [];
+  private isFetchingDatacenters: boolean = false;
+  private isFetchingNodes: boolean = false;
 
   constructor (private _router: Router,
                private _appStore: AppStore,
-               private _consulActions: ConsulActions,
-               private _consulService: ConsulService) {
+               private _consulActions: ConsulActions) {
   }
 
   ngOnInit() {
     this._appStore.subscribe((state) => {
-      this.datacenters = state.datacenters;
-      this.isFetchingDatacenters = state.isFetchingDatacenters;
+      this.datacenters = state.consul.datacenters;
+      this.nodes = state.consul.nodes;
+      this.isFetchingDatacenters = state.consul.isFetchingDatacenters;
+      this.isFetchingNodes = state.consul.isFetchingNodes;
     });
 
     this._appStore.dispatch(this._consulActions.fetchDatacenters());
   }
 
-  setDatacenter(dc: string) {
-    this._consulService.getNodes(dc)
-      .subscribe(res => this.nodes = res);
+  // @TODO: attach this to a change detection (EventEmitter) so that it can be:
+  // 1.) loaded by default at the app load
+  // 2.) work when someone picks a different dc
+  selectDatacenter(dc: string) {
+    this.currentDatacenter = dc;
+    this._appStore.dispatch(this._consulActions.fetchNodes(this.currentDatacenter));
   }
 
   gotoNode(name: string) {

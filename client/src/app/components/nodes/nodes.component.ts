@@ -1,7 +1,8 @@
 import {Component, OnInit} from 'angular2/core';
 import {Router} from 'angular2/router';
+import {AppStore} from 'angular2-redux';
 
-import {ConsulService} from '../consul/providers/consul.service';
+import {ConsulActions} from '../../actions/consul.actions';
 import {NodeDetailComponent} from './node-detail.component';
 import {SwarmNode} from './interfaces/swarm-node';
 
@@ -19,18 +20,20 @@ import {SwarmNode} from './interfaces/swarm-node';
 export class NodesComponent implements OnInit {
   public nodes: SwarmNode[];
   public selectedNode: SwarmNode;
+  private isFetchingNodes: boolean = false;
 
-  constructor(private _consulService: ConsulService,
-              private _router: Router) {
+  constructor(private _router: Router,
+              private _appStore: AppStore,
+              private _consulActions: ConsulActions) {
   }
 
   ngOnInit() {
-    this.getNodes();
-  }
+    this._appStore.subscribe((state) => {
+      this.nodes = state.consul.nodes;
+      this.isFetchingNodes = state.consul.isFetchingNodes;
+    });
 
-  getNodes() {
-    this._consulService.getNodes()
-      .subscribe(res => this.nodes = res);
+    this._appStore.dispatch(this._consulActions.fetchNodes());
   }
 
   onSelect(node: SwarmNode) {

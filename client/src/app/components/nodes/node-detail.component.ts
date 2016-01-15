@@ -1,7 +1,8 @@
 import {Component, OnInit} from 'angular2/core';
 import {RouteParams} from 'angular2/router';
+import {AppStore} from 'angular2-redux';
 
-import {ConsulService} from '../consul/providers/consul.service';
+import {ConsulActions} from '../../actions/consul.actions';
 import {SwarmNode} from './interfaces/swarm-node';
 
 @Component({
@@ -14,16 +15,23 @@ import {SwarmNode} from './interfaces/swarm-node';
 
 export class NodeDetailComponent implements OnInit {
   public node: SwarmNode;
+  private isFetchingNode: boolean = false;
 
-  constructor(private _consulService: ConsulService,
-              private _routeParams: RouteParams) {
+  constructor(private _routeParams: RouteParams,
+              private _appStore: AppStore,
+              private _consulActions: ConsulActions) {
   }
 
   ngOnInit() {
     if (!this.node) {
       let name = this._routeParams.get('name');
-      this._consulService.getNode(name)
-        .subscribe(res => this.node = res);
+
+      this._appStore.subscribe((state) => {
+        this.node = state.consul.node;
+        this.isFetchingNode = state.consul.isFetchingNode;
+      });
+
+      this._appStore.dispatch(this._consulActions.fetchNode(name));
     }
   }
 

@@ -13,6 +13,19 @@ export default (state = [], action: any = {}) => {
         isFetchingDatacenters: false
       });
 
+    case ConsulActions.REQUEST_NODES:
+      return Object.assign({}, state, {
+        dc: action.dc,
+        isFetchingNodes: true
+      });
+
+    case ConsulActions.RECEIVE_NODES:
+      return Object.assign({}, state, {
+        dc: action.dc,
+        nodes: action.nodes,
+        isFetchingNodes: false
+      });
+
     default:
       return state;
   }
