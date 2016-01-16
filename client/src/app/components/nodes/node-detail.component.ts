@@ -1,4 +1,4 @@
-import {Component, OnInit} from 'angular2/core';
+import {Component, OnInit, OnDestroy} from 'angular2/core';
 import {RouteParams} from 'angular2/router';
 import {AppStore} from 'angular2-redux';
 
@@ -16,6 +16,7 @@ import {SwarmNode} from './interfaces/swarm-node';
 export class NodeDetailComponent implements OnInit {
   public node: SwarmNode;
   private isFetchingNode: boolean = false;
+  private unsubscribe: Function;
 
   constructor(private _routeParams: RouteParams,
               private _appStore: AppStore,
@@ -26,7 +27,7 @@ export class NodeDetailComponent implements OnInit {
     if (!this.node) {
       let name = this._routeParams.get('name');
 
-      this._appStore.subscribe((state) => {
+      this.unsubscribe = this._appStore.subscribe((state) => {
         this.node = state.consul.node;
         this.isFetchingNode = state.consul.isFetchingNode;
       });
@@ -37,5 +38,9 @@ export class NodeDetailComponent implements OnInit {
 
   goBack() {
     window.history.back();
+  }
+
+  private ngOnDestroy() {
+    this.unsubscribe();
   }
 }

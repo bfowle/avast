@@ -71,7 +71,7 @@ func startWebserver() {
 	consulRouter.HandleFunc("/health/{name}/{dc}", wrap(consulHealthHandler))
 
 	http.Handle("/", router)
-	loggedRouter := handlers.LoggingHandler(os.Stdout, router)
+	loggedRouter := handlers.CombinedLoggingHandler(os.Stdout, router)
 	panic(http.ListenAndServe(addr, handlers.CompressHandler(loggedRouter)))
 }
 

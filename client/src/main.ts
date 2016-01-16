@@ -9,7 +9,6 @@ import 'rxjs/add/operator/map';
 
 import {AppComponent} from './app/components/app.component';
 import {ConsulActions} from './app/actions/consul.actions';
-import {ConsulService} from './app/components/consul/providers/consul.service';
 import consul from './app/reducers/consul.reducer';
 
 const loggerMiddleware = store => next => action => {
@@ -36,8 +35,7 @@ document.addEventListener('DOMContentLoaded', function main() {
     ...HTTP_PROVIDERS,
     ...ROUTER_PROVIDERS,
     provide(AppStore, {useValue: appStore}),
-    ConsulActions,
-    ConsulService
+    ConsulActions
   ])
   .catch(err => console.error(err));
 });

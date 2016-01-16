@@ -1,7 +1,6 @@
 import {Component} from 'angular2/core';
 import {RouteConfig, ROUTER_DIRECTIVES} from 'angular2/router';
 
-import {ConsulService} from './consul/providers/consul.service';
 import {DashboardComponent} from './dashboard/dashboard.component';
 import {NodeDetailComponent} from './nodes/node-detail.component';
 import {NodesComponent} from './nodes/nodes.component';
@@ -19,8 +18,7 @@ import {NodesComponent} from './nodes/nodes.component';
   styles: [
     require('./app.component.css')
   ],
-  directives: [ROUTER_DIRECTIVES],
-  providers: [ConsulService],
+  directives: [ROUTER_DIRECTIVES]
 })
 
 @RouteConfig([

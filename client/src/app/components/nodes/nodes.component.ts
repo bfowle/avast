@@ -1,4 +1,4 @@
-import {Component, OnInit} from 'angular2/core';
+import {Component, OnInit, OnDestroy} from 'angular2/core';
 import {Router} from 'angular2/router';
 import {AppStore} from 'angular2-redux';
 
@@ -21,6 +21,7 @@ export class NodesComponent implements OnInit {
   public nodes: SwarmNode[];
   public selectedNode: SwarmNode;
   private isFetchingNodes: boolean = false;
+  private unsubscribe: Function;
 
   constructor(private _router: Router,
               private _appStore: AppStore,
@@ -28,7 +29,7 @@ export class NodesComponent implements OnInit {
   }
 
   ngOnInit() {
-    this._appStore.subscribe((state) => {
+    this.unsubscribe = this._appStore.subscribe((state) => {
       this.nodes = state.consul.nodes;
       this.isFetchingNodes = state.consul.isFetchingNodes;
     });
@@ -44,5 +45,9 @@ export class NodesComponent implements OnInit {
     this._router.navigate(['NodeDetail', {
       name: this.selectedNode.node
     }]);
+  }
+
+  private ngOnDestroy() {
+    this.unsubscribe();
   }
 }
