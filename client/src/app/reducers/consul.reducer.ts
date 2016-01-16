@@ -26,6 +26,19 @@ export default (state = [], action: any = {}) => {
         isFetchingNodes: false
       });
 
+    case ConsulActions.REQUEST_NODE:
+      return Object.assign({}, state, {
+        name: action.name,
+        isFetchingNode: true
+      });
+
+    case ConsulActions.RECEIVE_NODE:
+      return Object.assign({}, state, {
+        name: action.dc,
+        node: action.node,
+        isFetchingNode: false
+      });
+
     default:
       return state;
   }

@@ -32,11 +32,10 @@ export class ConsulActions extends Actions {
   }
 
   fetchNodes(dc: string = '') {
-
     return (dispatch) => {
       dispatch(this.requestNodes(dc));
 
-      this._http.get('/api/${API_VERSION}/consul/nodes${dc ? "/" + dc : ""}')
+      this._http.get(`/api/${API_VERSION}/consul/nodes${dc ? '/' + dc : ''}`)
         .map((res: Response) => res.json())
         .map(res => dispatch(this.receiveNodes(dc, res)))
         .subscribe();

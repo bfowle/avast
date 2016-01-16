@@ -14,9 +14,9 @@
 <div *ngIf="nodes?.length">
   <h3>Nodes</h3>
   <div class="grid grid-pad">
-    <div *ngFor="#dcn of nodes" class="col-1-4" (click)="gotoNode(dcn.node)">
+    <div *ngFor="#dcn of nodes" class="col-1-4" (click)="gotoNode(dcn.name)">
       <div class="module">
-        <h4>{{dcn.node}}</h4>
+        <h4>{{dcn.name}}</h4>
         <h6>{{dcn.address}}</h6>
       </div>
     </div>

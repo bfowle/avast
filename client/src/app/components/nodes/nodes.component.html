@@ -4,7 +4,7 @@
     <li *ngFor="#n of nodes"
       [class.selected]="n === selectedNode"
       (click)="onSelect(n)">
-      <span class="badge">{{n.node}}</span> {{n.address}}
+      <span class="badge">{{n.name}}</span> {{n.address}}
     </li>
   </ul>
   <div *ngIf="selectedNode">

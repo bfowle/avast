@@ -29,18 +29,23 @@ type ClientNode struct {
 }
 
 type ConsulNode struct {
-    Id          string  `json:"id"`
-    Host        string  `json:"host"`
-    Port        string  `json:"port"`
-    URL         string  `json:"url"`
     *ClientNode
     Services  []*consul.AgentService  `json:"services"`
     Checks    []*consul.HealthCheck   `json:"checks"`
 }
 
+type ConsulServiceNode struct {
+    Id      string  `json:"id"`
+    Name    string  `json:"name"`
+    Host    string  `json:"host"`
+    Port    string  `json:"port"`
+    Address string  `json:"address"`
+    URL     string  `json:"url"`
+}
+
 type ConsulService struct {
     Name    string
-    Nodes   []*ConsulNode
+    Nodes   []*ConsulServiceNode
 }
 
 type ConsulWatcher struct {

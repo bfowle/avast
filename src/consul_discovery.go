@@ -56,10 +56,10 @@ func (cw *ConsulWatcher) serviceHandler(idx uint64, data interface{}) {
 
     for _, e := range entries {
         cs.Name = e.Service.Service
-        cs.Nodes = append(cs.Nodes, &ConsulNode{
+        cs.Nodes = append(cs.Nodes, &ConsulServiceNode{
             Id: e.Service.ID,
+            Address: e.Node.Address,
             Port: strconv.Itoa(e.Service.Port),
-            ClientNode: &ClientNode{e.Node.Node, e.Node.Address},
         })
         fmt.Printf(" --> Service: %v - Node: %v (%v)\n", cs.Name, e.Node.Node, e.Node.Address)
     }

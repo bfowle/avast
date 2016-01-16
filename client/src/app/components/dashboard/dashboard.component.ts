@@ -46,6 +46,7 @@ export class DashboardComponent implements OnInit {
   }
 
   gotoNode(name: string) {
+    console.log(name);
     this._router.navigate(['NodeDetail', { name: name }]);
   }
 
