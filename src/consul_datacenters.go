@@ -19,8 +19,8 @@ import (
     "net/http"
 )
 
-func consulDatacentersHandler(w http.ResponseWriter, r *http.Request) (interface{}, error) {
-    datacenters, err := consul.Catalog.Datacenters()
+func (cr *ConsulRegistry) DatacentersHandler(w http.ResponseWriter, r *http.Request) (interface{}, error) {
+    datacenters, err := cr.Catalog.Datacenters()
     if err != nil {
         w.WriteHeader(http.StatusBadRequest)
         w.Write([]byte(fmt.Sprintf("Consul endpoint failed: %v", err)))

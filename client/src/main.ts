@@ -23,10 +23,16 @@ let createStoreWithMiddleware = applyMiddleware(
   loggerMiddleware
 )(createStore);
 
+const initState = {
+  consul: {
+    //datacenters: ['dc1']
+  }
+};
+
 const appStore = new AppStore(
   createStoreWithMiddleware(combineReducers({
     consul
-  }))
+  }), initState)
 );
 
 document.addEventListener('DOMContentLoaded', function main() {

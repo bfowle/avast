@@ -229,6 +229,8 @@ func TestOpen_Size(t *testing.T) {
 	path := db.Path()
 	defer db.MustClose()
 
+	pagesize := db.Info().PageSize
+
 	// Insert until we get above the minimum 4MB size.
 	if err := db.Update(func(tx *bolt.Tx) error {
 		b, _ := tx.CreateBucketIfNotExists([]byte("data"))
@@ -273,7 +275,8 @@ func TestOpen_Size(t *testing.T) {
 	}
 
 	// Compare the original size with the new size.
-	if sz != newSz {
+	// db size might increase by a few page sizes due to the new small update.
+	if sz < newSz-5*int64(pagesize) {
 		t.Fatalf("unexpected file growth: %d => %d", sz, newSz)
 	}
 }
@@ -289,6 +292,8 @@ func TestOpen_Size_Large(t *testing.T) {
 	db := MustOpenDB()
 	path := db.Path()
 	defer db.MustClose()
+
+	pagesize := db.Info().PageSize
 
 	// Insert until we get above the minimum 4MB size.
 	var index uint64
@@ -338,7 +343,8 @@ func TestOpen_Size_Large(t *testing.T) {
 	}
 
 	// Compare the original size with the new size.
-	if sz != newSz {
+	// db size might increase by a few page sizes due to the new small update.
+	if sz < newSz-5*int64(pagesize) {
 		t.Fatalf("unexpected file growth: %d => %d", sz, newSz)
 	}
 }
@@ -904,11 +910,11 @@ func TestDB_Stats(t *testing.T) {
 
 	stats := db.Stats()
 	if stats.TxStats.PageCount != 2 {
-		t.Fatalf("unexpected TxStats.PageCount", stats.TxStats.PageCount)
+		t.Fatalf("unexpected TxStats.PageCount: %d", stats.TxStats.PageCount)
 	} else if stats.FreePageN != 0 {
-		t.Fatalf("unexpected FreePageN != 0", stats.FreePageN)
+		t.Fatalf("unexpected FreePageN != 0: %d", stats.FreePageN)
 	} else if stats.PendingPageN != 2 {
-		t.Fatalf("unexpected PendingPageN != 2", stats.PendingPageN)
+		t.Fatalf("unexpected PendingPageN != 2: %d", stats.PendingPageN)
 	}
 }
 

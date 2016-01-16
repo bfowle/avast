@@ -183,7 +183,7 @@ func (c *Command) readConfig() *Config {
 		if _, err := os.Stat(mdbPath); !os.IsNotExist(err) {
 			c.Ui.Error(fmt.Sprintf("CRITICAL: Deprecated data folder found at %q!", mdbPath))
 			c.Ui.Error("Consul will refuse to boot with this directory present.")
-			c.Ui.Error("See https://consul.io/docs/upgrade-specific.html for more information.")
+			c.Ui.Error("See https://www.consul.io/docs/upgrade-specific.html for more information.")
 			return nil
 		}
 	}
@@ -674,7 +674,7 @@ func (c *Command) Run(args []string) int {
 					}
 				}
 			}()
-			go reap.ReapChildren(pids, errors, c.agent.shutdownCh)
+			go reap.ReapChildren(pids, errors, c.agent.shutdownCh, &c.agent.reapLock)
 		}
 	}
 
@@ -709,7 +709,7 @@ func (c *Command) Run(args []string) int {
 	// Register the watches
 	for _, wp := range config.WatchPlans {
 		go func(wp *watch.WatchPlan) {
-			wp.Handler = makeWatchHandler(logOutput, wp.Exempt["handler"])
+			wp.Handler = makeWatchHandler(logOutput, wp.Exempt["handler"], &c.agent.reapLock)
 			wp.LogOutput = c.logOutput
 			if err := wp.Run(httpAddr.String()); err != nil {
 				c.Ui.Error(fmt.Sprintf("Error running watch: %v", err))
@@ -896,7 +896,7 @@ func (c *Command) handleReload(config *Config) *Config {
 	// Register the new watches
 	for _, wp := range newConf.WatchPlans {
 		go func(wp *watch.WatchPlan) {
-			wp.Handler = makeWatchHandler(c.logOutput, wp.Exempt["handler"])
+			wp.Handler = makeWatchHandler(c.logOutput, wp.Exempt["handler"], &c.agent.reapLock)
 			wp.LogOutput = c.logOutput
 			if err := wp.Run(httpAddr.String()); err != nil {
 				c.Ui.Error(fmt.Sprintf("Error running watch: %v", err))
@@ -958,6 +958,7 @@ Usage: consul agent [options]
 Options:
 
   -advertise=addr          Sets the advertise address to use
+  -advertise-wan=addr      Sets address to advertise on wan instead of advertise addr
   -atlas=org/name          Sets the Atlas infrastructure name, enables SCADA.
   -atlas-join              Enables auto-joining the Atlas cluster
   -atlas-token=token       Provides the Atlas API token

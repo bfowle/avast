@@ -9,6 +9,12 @@
 			"path": "/statsd"
 		},
 		{
+			"importpath": "github.com/Sirupsen/logrus",
+			"repository": "https://github.com/Sirupsen/logrus",
+			"revision": "446d1c146faa8ed3f4218f056fcd165f6bcfda81",
+			"branch": "master"
+		},
+		{
 			"importpath": "github.com/armon/circbuf",
 			"repository": "https://github.com/armon/circbuf",
 			"revision": "bbbad097214e2918d8543d5201d12bfd7bca254d",
@@ -23,7 +29,7 @@
 		{
 			"importpath": "github.com/armon/go-radix",
 			"repository": "https://github.com/armon/go-radix",
-			"revision": "fbd82e84e2b13651f3abc5ffd26b65ba71bc8f93",
+			"revision": "4239b77079c7b5d1243b7b4736304ce8ddb6f0f2",
 			"branch": "master"
 		},
 		{
@@ -35,19 +41,26 @@
 		{
 			"importpath": "github.com/boltdb/bolt",
 			"repository": "https://github.com/boltdb/bolt",
-			"revision": "25b28102db2053fa885b2a4798d5dfa94745f4b6",
+			"revision": "6465994716bf6400605746e79224cf1e7ed68725",
 			"branch": "master"
+		},
+		{
+			"importpath": "github.com/docker/docker/pkg/discovery",
+			"repository": "https://github.com/docker/docker",
+			"revision": "d232ed4cea83a9f908b37012eea8627610a3d1ef",
+			"branch": "master",
+			"path": "/pkg/discovery"
 		},
 		{
 			"importpath": "github.com/docker/engine-api",
 			"repository": "https://github.com/docker/engine-api",
-			"revision": "7f8feaf6a4d092d0ddb924b83247a4a07c86a554",
+			"revision": "31b698aad77eafbef7e6a344a001038c46a68425",
 			"branch": "master"
 		},
 		{
 			"importpath": "github.com/docker/go-connections/nat",
 			"repository": "https://github.com/docker/go-connections",
-			"revision": "4e42727957c146776e5de9cec8c39e4059ed9f20",
+			"revision": "082e382836465660fe3fd21de06624a205f986eb",
 			"branch": "master",
 			"path": "/nat"
 		},
@@ -72,7 +85,7 @@
 		{
 			"importpath": "github.com/fsouza/go-dockerclient",
 			"repository": "https://github.com/fsouza/go-dockerclient",
-			"revision": "175e1df973274f04e9b459a62cffc49808f1a649",
+			"revision": "593f9b9b8e59ae45ea4838781fef638e880be946",
 			"branch": "master"
 		},
 		{
@@ -84,7 +97,7 @@
 		{
 			"importpath": "github.com/gorilla/handlers",
 			"repository": "https://github.com/gorilla/handlers",
-			"revision": "7409928170f9f1cbaa874840dc4ff8df161a6c25",
+			"revision": "8f2758070a82adb7a3ad6b223a0b91878f32d400",
 			"branch": "master"
 		},
 		{
@@ -102,8 +115,15 @@
 		{
 			"importpath": "github.com/hashicorp/consul",
 			"repository": "https://github.com/hashicorp/consul",
-			"revision": "562bf11e9ff784824f9c5fec0ad3609805e13a3d",
+			"revision": "b6f03d39ccde1a90a9a2a133d63abd79e4ae77f2",
 			"branch": "master"
+		},
+		{
+			"importpath": "github.com/hashicorp/consul/watch",
+			"repository": "https://github.com/hashicorp/consul",
+			"revision": "b6f03d39ccde1a90a9a2a133d63abd79e4ae77f2",
+			"branch": "master",
+			"path": "/watch"
 		},
 		{
 			"importpath": "github.com/hashicorp/errwrap",
@@ -151,7 +171,7 @@
 		{
 			"importpath": "github.com/hashicorp/go-reap",
 			"repository": "https://github.com/hashicorp/go-reap",
-			"revision": "7a6937be3f1a2bab8553cc928dce6536b022f19b",
+			"revision": "2d85522212dcf5a84c6b357094f5c44710441912",
 			"branch": "master"
 		},
 		{
@@ -211,14 +231,14 @@
 		{
 			"importpath": "github.com/hashicorp/serf/coordinate",
 			"repository": "https://github.com/hashicorp/serf",
-			"revision": "39c7c06298b480560202bec00c2c77e974e88792",
+			"revision": "b60fe33be5c14bcfb4b23969bf2776cf26ca9d86",
 			"branch": "master",
 			"path": "/coordinate"
 		},
 		{
 			"importpath": "github.com/hashicorp/serf/serf",
 			"repository": "https://github.com/hashicorp/serf",
-			"revision": "39c7c06298b480560202bec00c2c77e974e88792",
+			"revision": "b60fe33be5c14bcfb4b23969bf2776cf26ca9d86",
 			"branch": "master",
 			"path": "/serf"
 		},
@@ -243,7 +263,7 @@
 		{
 			"importpath": "github.com/miekg/dns",
 			"repository": "https://github.com/miekg/dns",
-			"revision": "1756430e42a7b2ecded216a9fdd37d002c116df5",
+			"revision": "297a77c2fb5ebf0f261733e3c03f0c3bb9fdd917",
 			"branch": "master"
 		},
 		{
@@ -267,7 +287,7 @@
 		{
 			"importpath": "golang.org/x/sys/unix",
 			"repository": "https://go.googlesource.com/sys",
-			"revision": "833a04a10549a95dc34458c195cbad61bbb6cb4d",
+			"revision": "442cd600860ce722f6615730eb008a37a87b13ee",
 			"branch": "master",
 			"path": "/unix"
 		}

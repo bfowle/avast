@@ -1,4 +1,28 @@
-## 0.6.1 (January 6, 2015)
+## 0.7.0 (UNRELEASED)
+
+IMPROVEMENTS:
+
+BUG FIXES:
+
+## 0.6.3 (January 15, 2016)
+
+BUG FIXES:
+
+* Fixed an issue when running Consul as PID 1 in a Docker container where
+  it could consume CPU and show spurious failures for health checks, watch
+  handlers, and `consul exec` commands [GH-1592]
+
+## 0.6.2 (January 13, 2016)
+
+SECURITY:
+
+* Build against Go 1.5.3 to mitigate a security vulnerability introduced
+  in Go 1.5. For more information, please see https://groups.google.com/forum/#!topic/golang-dev/MEATuOi_ei4
+
+This is a security-only release; other than the version number and building
+against Go 1.5.3, there are no changes from 0.6.1.
+
+## 0.6.1 (January 6, 2016)
 
 BACKWARDS INCOMPATIBILITIES:
 

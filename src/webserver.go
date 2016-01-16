@@ -63,12 +63,12 @@ func startWebserver() {
 	dockerRouter.HandleFunc("/info", wrap(dockerInfoHandler))
 
 	consulRouter := router.PathPrefix(fmt.Sprintf("/api/%v/consul", apiVersion)).Subrouter()
-	consulRouter.HandleFunc("/datacenters", wrap(consulDatacentersHandler))
-	consulRouter.HandleFunc("/nodes", wrap(consulNodesHandler))
-	consulRouter.HandleFunc("/nodes/{dc}", wrap(consulNodesHandler))
-	consulRouter.HandleFunc("/node/{name}", wrap(consulNodeHandler))
-	consulRouter.HandleFunc("/health/{name}", wrap(consulHealthHandler))
-	consulRouter.HandleFunc("/health/{name}/{dc}", wrap(consulHealthHandler))
+	consulRouter.HandleFunc("/datacenters", wrap(consulRegistry.DatacentersHandler))
+	consulRouter.HandleFunc("/nodes", wrap(consulRegistry.NodesHandler))
+	consulRouter.HandleFunc("/nodes/{dc}", wrap(consulRegistry.NodesHandler))
+	consulRouter.HandleFunc("/node/{name}", wrap(consulRegistry.NodeHandler))
+	consulRouter.HandleFunc("/health/{name}", wrap(consulRegistry.HealthHandler))
+	consulRouter.HandleFunc("/health/{name}/{dc}", wrap(consulRegistry.HealthHandler))
 
 	http.Handle("/", router)
 	loggedRouter := handlers.CombinedLoggingHandler(os.Stdout, router)

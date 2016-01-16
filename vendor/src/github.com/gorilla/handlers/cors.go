@@ -10,15 +10,19 @@ import (
 type CORSOption func(*cors) error
 
 type cors struct {
-	h                http.Handler
-	allowedHeaders   []string
-	allowedMethods   []string
-	allowedOrigins   []string
-	exposedHeaders   []string
-	maxAge           int
-	ignoreOptions    bool
-	allowCredentials bool
+	h                      http.Handler
+	allowedHeaders         []string
+	allowedMethods         []string
+	allowedOrigins         []string
+	allowedOriginValidator originValidator
+	exposedHeaders         []string
+	maxAge                 int
+	ignoreOptions          bool
+	allowCredentials       bool
 }
+
+// originValidator takes an origin string and returns whether or not that origin is allowed.
+type originValidator func(string) bool
 
 var (
 	defaultCorsMethods = []string{"GET", "HEAD", "POST"}
@@ -130,9 +134,8 @@ func (ch *cors) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 //  }
 //
 func CORS(opts ...CORSOption) func(http.Handler) http.Handler {
-	ch := parseCORSOptions(opts...)
-
 	return func(h http.Handler) http.Handler {
+		ch := parseCORSOptions(opts...)
 		ch.h = h
 		return ch
 	}
@@ -218,6 +221,15 @@ func AllowedOrigins(origins []string) CORSOption {
 	}
 }
 
+// AllowedOriginValidator sets a function for evaluating allowed origins in CORS requests, represented by the
+// 'Allow-Access-Control-Origin' HTTP header.
+func AllowedOriginValidator(fn originValidator) CORSOption {
+	return func(ch *cors) error {
+		ch.allowedOriginValidator = fn
+		return nil
+	}
+}
+
 // ExposeHeaders can be used to specify headers that are available
 // and will not be stripped out by the user-agent.
 func ExposedHeaders(headers []string) CORSOption {
@@ -275,6 +287,10 @@ func AllowCredentials() CORSOption {
 func (ch *cors) isOriginAllowed(origin string) bool {
 	if origin == "" {
 		return false
+	}
+
+	if ch.allowedOriginValidator != nil {
+		return ch.allowedOriginValidator(origin)
 	}
 
 	for _, allowedOrigin := range ch.allowedOrigins {

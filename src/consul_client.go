@@ -15,27 +15,75 @@
 package main
 
 import (
-    "github.com/hashicorp/consul/api"
+    "sync"
+
+    consul "github.com/hashicorp/consul/api"
+    "github.com/hashicorp/consul/watch"
 )
 
-var consul *Consul
+var consulRegistry *ConsulRegistry
 
-type Consul struct {
-    Client  *api.Client
-    Agent   *api.Agent
-    Catalog *api.Catalog
-    Health  *api.Health
+type ClientNode struct {
+    Name        string  `json:"name"`
+    Address     string  `json:"address"`
+}
+
+type ConsulNode struct {
+    Id          string  `json:"id"`
+    Host        string  `json:"host"`
+    Port        string  `json:"port"`
+    URL         string  `json:"url"`
+    *ClientNode
+    Services  []*consul.AgentService  `json:"services"`
+    Checks    []*consul.HealthCheck   `json:"checks"`
+}
+
+type ConsulService struct {
+    Name    string
+    Nodes   []*ConsulNode
+}
+
+type ConsulWatcher struct {
+    WatchPlan   *watch.WatchPlan
+    Watchers    map[string]*watch.WatchPlan
+}
+
+type Watcher interface {
+    Stop()
+}
+
+type ConsulRegistry struct {
+    Address     string
+    Client      *consul.Client
+    Agent       *consul.Agent
+    Catalog     *consul.Catalog
+    Health      *consul.Health
+    Services    map[string]*ConsulService
+    Nodes       []*ConsulNode
+    sync.RWMutex
 }
 
 func registerConsul() {
-    client, err := api.NewClient(api.DefaultConfig())
+    config := consul.DefaultConfig()
+    c, err := consul.NewClient(config)
     if err != nil {
     }
 
-    consul = &Consul{
-        client,
-        client.Agent(),
-        client.Catalog(),
-        client.Health(),
+    consulRegistry = &ConsulRegistry{
+        Address:    config.Address,
+        Client:     c,
+        Agent:      c.Agent(),
+        Catalog:    c.Catalog(),
+        Health:     c.Health(),
+        Services:   make(map[string]*ConsulService),
     }
+
+    // Watchers: key, keyprefix, services, nodes, service, checks, event
+    // - https://github.com/hashicorp/consul/blob/master/watch/funcs.go
+    // - https://github.com/hashicorp/consul/blob/master/watch/funcs_test.go
+    //
+    // @TODO: checks: {status: passing|warning|failing|critical}
+
+    consulRegistry.registerConsulWatch("services")
+    consulRegistry.registerConsulWatch("nodes")
 }

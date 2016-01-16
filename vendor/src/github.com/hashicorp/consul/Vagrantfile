@@ -5,7 +5,7 @@
 VAGRANTFILE_API_VERSION = '2'
 
 @script = <<SCRIPT
-GOVERSION="1.5.2"
+GOVERSION="1.5.3"
 SRCROOT="/opt/go"
 SRCPATH="/opt/gopath"
 
@@ -55,6 +55,11 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       v.vmx['numvcpus'] = '2'
       v.vmx['cpuid.coresPerSocket'] = '1'
     end
+  end
+
+  config.vm.provider "virtualbox" do |v|
+    v.memory = 2048
+    v.cpus = 2
   end
 
   config.vm.define '64bit' do |n1|
