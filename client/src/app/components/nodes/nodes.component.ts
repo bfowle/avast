@@ -43,7 +43,7 @@ export class NodesComponent implements OnInit {
 
   gotoDetail() {
     this._router.navigate(['NodeDetail', {
-      name: this.selectedNode.node
+      name: this.selectedNode.name
     }]);
   }
 

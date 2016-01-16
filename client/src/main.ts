@@ -9,7 +9,9 @@ import 'rxjs/add/operator/map';
 
 import {AppComponent} from './app/components/app.component';
 import {ConsulActions} from './app/actions/consul.actions';
+import {DockerActions} from './app/actions/docker.actions';
 import consul from './app/reducers/consul.reducer';
+import docker from './app/reducers/docker.reducer';
 
 const loggerMiddleware = store => next => action => {
     console.log('dispatching', action);
@@ -26,12 +28,17 @@ let createStoreWithMiddleware = applyMiddleware(
 const initState = {
   consul: {
     //datacenters: ['dc1']
+  },
+  docker: {
+    //containers: [],
+    //images: []
   }
 };
 
 const appStore = new AppStore(
   createStoreWithMiddleware(combineReducers({
-    consul
+    consul,
+    docker
   }), initState)
 );
 
@@ -41,7 +48,8 @@ document.addEventListener('DOMContentLoaded', function main() {
     ...HTTP_PROVIDERS,
     ...ROUTER_PROVIDERS,
     provide(AppStore, {useValue: appStore}),
-    ConsulActions
+    ConsulActions,
+    DockerActions
   ])
   .catch(err => console.error(err));
 });

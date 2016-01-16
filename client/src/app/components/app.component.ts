@@ -2,8 +2,10 @@ import {Component} from 'angular2/core';
 import {RouteConfig, ROUTER_DIRECTIVES} from 'angular2/router';
 
 import {DashboardComponent} from './dashboard/dashboard.component';
-import {NodeDetailComponent} from './nodes/node-detail.component';
 import {NodesComponent} from './nodes/nodes.component';
+import {NodeDetailComponent} from './nodes/node-detail.component';
+import {ContainersComponent} from './containers/containers.component';
+import {ImagesComponent} from './images/images.component';
 
 @Component({
   selector: 'avast',
@@ -23,29 +25,29 @@ import {NodesComponent} from './nodes/nodes.component';
 
 @RouteConfig([
   {
-  //  path: '/',
-  //  redirectTo: ['Dashboard']},
-  //}, {
+    path: '/',
+    redirectTo: ['Dashboard']
+  }, {
     path: '/dashboard',
     name: 'Dashboard',
     component: DashboardComponent,
-    useAsDefault: true,
+    useAsDefault: true
   }, {
     path: '/nodes',
     name: 'Nodes',
-    component: NodesComponent,
-  }, {
-    path: '/containers',
-    name: 'Containers',
-    component: NodesComponent,
-  }, {
-    path: '/images',
-    name: 'Images',
-    component: NodesComponent,
+    component: NodesComponent
   }, {
     path: '/node/detail/:name',
     name: 'NodeDetail',
-    component: NodeDetailComponent,
+    component: NodeDetailComponent
+  }, {
+    path: '/containers',
+    name: 'Containers',
+    component: ContainersComponent
+  }, {
+    path: '/images',
+    name: 'Images',
+    component: ImagesComponent
   }
 ])
 

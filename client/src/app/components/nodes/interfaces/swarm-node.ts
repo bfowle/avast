@@ -1,4 +1,4 @@
 export interface SwarmNode {
-  address: string;
-  node: string;
+  name:     string;
+  address:  string;
 }

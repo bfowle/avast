@@ -58,15 +58,11 @@ export class ConsulActions extends Actions {
   }
 
   requestNodes(dc: string) {
-    return {
-      type: REQUEST_NODES
-    };
+    return {type: REQUEST_NODES};
   }
 
   requestNode(name: string) {
-    return {
-      type: REQUEST_NODE
-    };
+    return {type: REQUEST_NODE};
   }
 
   receiveDatacenters(datacenters: string[]) {

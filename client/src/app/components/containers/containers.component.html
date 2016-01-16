@@ -1,0 +1,14 @@
+<div *ngIf="containers">
+  <h2>Containers</h2>
+  <ul class="containers">
+    <li *ngFor="#c of containers"
+      [class.selected]="c === selectedContainer"
+      (click)="onSelect(c)">
+      <span class="badge">{{c.Image}}</span> {{c.Names}} <code>{{c.Status}}</code>
+    </li>
+  </ul>
+  <div *ngIf="selectedContainer">
+    <h2>{{selectedContainer.Names}}</h2>
+    <button (click)="gotoDetail()">View Details</button>
+  </div>
+</div>
