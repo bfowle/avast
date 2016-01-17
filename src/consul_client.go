@@ -87,5 +87,7 @@ func registerConsul() {
     //
     // Checks: {status: passing|warning|failing|critical}
 
-    consulRegistry.registerConsulWatch()
+    consulRegistry.registerConsulWatch("services")
+    consulRegistry.registerConsulWatch("nodes")
+    consulRegistry.registerConsulWatch("checks")
 }

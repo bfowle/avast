@@ -23,17 +23,24 @@ import (
     "github.com/hashicorp/consul/watch"
 )
 
-func (cr *ConsulRegistry) registerConsulWatch() (Watcher, error) {
+func (cr *ConsulRegistry) registerConsulWatch(t string) (Watcher, error) {
     cw := &ConsulWatcher{
         Watchers: make(map[string]*watch.WatchPlan),
     }
 
-    wp, err := watch.Parse(map[string]interface{}{"type": "services"})
+    wp, err := watch.Parse(map[string]interface{}{"type": t})
     if err != nil {
         return nil, err
     }
 
-    wp.Handler = cw.ServiceHandle
+    switch t {
+    case "services":
+        wp.Handler = cw.ServiceHandle
+    case "nodes":
+        wp.Handler = cw.NodeHandle
+    case "checks":
+        wp.Handler = cw.CheckHandle
+    }
     go wp.Run(cr.Address)
     cw.WatchPlan = wp
 
@@ -125,40 +132,75 @@ func (cw *ConsulWatcher) ServiceHandle(idx uint64, data interface{}) {
     }
 }
 
-//func (cw *ConsulWatcher) NodeHandle(idx uint64, data interface{}) {
-//    nodes, ok := data.([]*consul.Node)
-//    fmt.Printf(" %v -- NODES HANDLE\n", time.Now())
-//    fmt.Println(nodes)
-//    for _, n := range nodes {
-//        node := &ClientNode{n.Node, n.Address}
-//        fmt.Printf(" --> Node: %v (%v)\n", node.Name, node.Address)
-//    }
-//
-//    if !ok {
-//        return
-//    }
-//
-//    //consulRegistry.RLock()
-//    //rnodes := consulRegistry.Nodes
-//    //consulRegistry.RUnlock()
-//
-//    // remove unknown nodes from registry
-//    //for n, _ := range rnodes {
-//    //    if _, ok := nodes[n]; !ok {
-//    //        consulRegistry.Lock()
-//    //        delete(consulRegistry.Nodes, n)
-//    //        consulRegistry.Unlock()
-//    //    }
-//    //}
-//
-//    //// remove unknown nodes from watchers
-//    //for n, w := range cw.Watchers {
-//    //    if _, ok := nodes[n]; !ok {
-//    //        w.Stop()
-//    //        delete(cw.Watchers, n)
-//    //    }
-//    //}
-//}
+func (cw *ConsulWatcher) NodeHandle(idx uint64, data interface{}) {
+    nodes, ok := data.([]*consul.Node)
+    fmt.Printf(" %v -- NODES HANDLE\n", time.Now())
+    fmt.Println(nodes)
+    for _, n := range nodes {
+        node := &ClientNode{n.Node, n.Address}
+        fmt.Printf(" --> Node: %v (%v)\n", node.Name, node.Address)
+    }
+
+    if !ok {
+        return
+    }
+
+    //consulRegistry.RLock()
+    //rnodes := consulRegistry.Nodes
+    //consulRegistry.RUnlock()
+
+    // remove unknown nodes from registry
+    //for n, _ := range rnodes {
+    //    if _, ok := nodes[n]; !ok {
+    //        consulRegistry.Lock()
+    //        delete(consulRegistry.Nodes, n)
+    //        consulRegistry.Unlock()
+    //    }
+    //}
+
+    //// remove unknown nodes from watchers
+    //for n, w := range cw.Watchers {
+    //    if _, ok := nodes[n]; !ok {
+    //        w.Stop()
+    //        delete(cw.Watchers, n)
+    //    }
+    //}
+}
+
+func (cw *ConsulWatcher) CheckHandle(idx uint64, data interface{}) {
+    checks, ok := data.([]*consul.HealthCheck)
+    fmt.Printf(" %v -- HEALTH HANDLE\n", time.Now())
+    fmt.Println(checks)
+    for _, c := range checks {
+        fmt.Printf(" --> CheckID: %v, Name: %v, Node: %v, Status: %v, Output: %v\n",
+            c.CheckID, c.Name, c.Node, c.Status, c.Output)
+    }
+
+    if !ok {
+        return
+    }
+
+    //consulRegistry.RLock()
+    //rnodes := consulRegistry.Nodes
+    //consulRegistry.RUnlock()
+
+    // remove unknown nodes from registry
+    //for n, _ := range rnodes {
+    //    if _, ok := nodes[n]; !ok {
+    //        consulRegistry.Lock()
+    //        delete(consulRegistry.Nodes, n)
+    //        consulRegistry.Unlock()
+    //    }
+    //}
+
+    //// remove unknown nodes from watchers
+    //for n, w := range cw.Watchers {
+    //    if _, ok := nodes[n]; !ok {
+    //        w.Stop()
+    //        delete(cw.Watchers, n)
+    //    }
+    //}
+}
 
 func (cw *ConsulWatcher) Stop() {
     if cw.WatchPlan == nil {

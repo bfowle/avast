@@ -8,11 +8,11 @@
 ### Building
 
 ```
-get get ./src
+get get ./src/
 # recommended:
 # gb vendor fetch --all
 
-go build -o bin/avast ./src
+go build -o bin/avast ./src/
 ```
 
 ### Running
