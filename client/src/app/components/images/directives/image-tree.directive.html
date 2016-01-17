@@ -1,12 +1,14 @@
 <ul class="images" *ngIf="children?.length">
   <li *ngFor="#child of children">
-    <span *ngFor="#tag of child.repoTags">
-      <span class="badge" *ngIf="tag !== '<none>:<none>'">{{tag}}</span>
-    </span>
-    <span>
-      {{child.id}}
-      <code>{{child.size}}</code>
-    </span>
+    <div class="image">
+      <span *ngFor="#tag of child.repoTags">
+        <span class="badge" *ngIf="tag !== '<none>:<none>'">{{tag}}</span>
+      </span>
+      <span class="text">
+        {{child.id}}
+        <code>{{child.size}}</code>
+      </span>
+    </div>
     <image-tree [children]="child.children"></image-tree>
   </li>
 </ul>

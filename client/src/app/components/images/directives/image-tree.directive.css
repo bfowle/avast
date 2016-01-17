@@ -11,36 +11,38 @@
 }
 
 .images li {
-  cursor: pointer;
   position: relative;
   left: 0;
-  background-color: #EEE;
   margin: .5em;
-  padding: .3em 0em;
-  min-height: 1.6em;
-  border-radius: 4px;
 }
 
 .images li:last-child {
-  margin-bottom: 0;
+  margin-bottom: 1.4em;
 }
 
-.images li:hover {
+.image {
+  cursor: pointer;
+  background-color: #EEE;
+  min-height: 1.6em;
+  padding: .3em 0em;
+  border-radius: 4px;
+}
+
+.image:hover {
   color: #607D8B;
   background-color: #EEE;
   left: .1em;
 }
 
-.images li.selected:hover {
+.image.selected:hover {
   color: white;
 }
 
-.images .text {
-  position: relative;
-  top: -3px;
+.image .text {
+  margin-left: .4em;
 }
 
-.images .badge {
+.image .badge {
   display: inline-block;
   font-size: small;
   color: white;
@@ -49,13 +51,13 @@
   line-height: 1em;
   position: relative;
   left: -1px;
-  top: -4px;
-  height: 1.8em;
-  margin-right: .8em;
+  top: 0;
+  height: 1.6em;
+  margin-right: .2em;
   border-radius: 4px 0px 0px 4px;
 }
 
-.images code {
+.image code {
   margin-left: .8em;
 }
 
