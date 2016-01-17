@@ -84,13 +84,13 @@ func registerConsul() {
 
     // Watchers: key, keyprefix, services, nodes, service, checks, event
     // - https://github.com/hashicorp/consul/blob/master/watch/funcs.go
-    // - https://github.com/hashicorp/consul/blob/master/watch/funcs_test.go
-    //
     // Checks: {status: passing|warning|failing|critical}
 
     consulWatcher = &ConsulWatcher{
         Watchers: make(map[string]*watch.WatchPlan),
     }
+
+    // @TODO: on watch results, add to "trend" to show stats over time
 
     consulRegistry.registerConsulWatch("services")
     consulRegistry.registerConsulWatch("nodes")

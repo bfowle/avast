@@ -4,13 +4,15 @@ import {AppStore} from 'angular2-redux';
 
 import {DockerActions} from '../../actions/docker.actions';
 import {DockerImage} from './interfaces/docker-image';
+import {ImageTree} from './directives/image-tree.directive';
 
 @Component({
   selector: 'avast-images',
   template: require('./images.component.html'),
   styles: [
     require('./images.component.css')
-  ]
+  ],
+  directives: [ImageTree]
 })
 
 export class ImagesComponent implements OnInit {

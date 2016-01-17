@@ -1,5 +1,7 @@
 <div *ngIf="rootImage">
   <h2>Images</h2>
+  <image-tree [children]="rootImage.children"></image-tree>
+  <!--
   <ul class="images">
     <li *ngFor="#i of rootImage.children"
       [class.selected]="i === selectedImage"
@@ -7,6 +9,7 @@
       <span class="badge">{{i.repoTags}}</span> {{i.id}} <code>{{i.size}}</code>
     </li>
   </ul>
+  -->
   <div *ngIf="selectedImage">
     <h2>{{selectedImage.id}}</h2>
     <button (click)="gotoDetail()">View Details</button>
