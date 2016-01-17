@@ -8,11 +8,11 @@
 ### Building
 
 ```
-get get
+get get ./src
 # recommended:
 # gb vendor fetch --all
 
-go build -o bin/avast github.com/bfowle/avast/src/
+go build -o bin/avast ./src
 ```
 
 ### Running
@@ -25,7 +25,7 @@ AVAST_API_VERSION=v1 \
   CONSUL_HTTP_ADDR=1.1.1.1:8500 \
   bin/avast
 ```
-  
+
 # Client-side
 
 > Located in the `client/` folder

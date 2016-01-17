@@ -17,27 +17,23 @@ package main
 import (
     "fmt"
     "strconv"
+    "time"
 
     consul "github.com/hashicorp/consul/api"
     "github.com/hashicorp/consul/watch"
 )
 
-func (cr *ConsulRegistry) registerConsulWatch(t string) (Watcher, error) {
+func (cr *ConsulRegistry) registerConsulWatch() (Watcher, error) {
     cw := &ConsulWatcher{
         Watchers: make(map[string]*watch.WatchPlan),
     }
 
-    wp, err := watch.Parse(map[string]interface{}{"type": t})
+    wp, err := watch.Parse(map[string]interface{}{"type": "services"})
     if err != nil {
         return nil, err
     }
 
-    switch t {
-    case "services":
-        wp.Handler = cw.ServiceHandle
-    case "nodes":
-        wp.Handler = cw.NodeHandle
-    }
+    wp.Handler = cw.ServiceHandle
     go wp.Run(cr.Address)
     cw.WatchPlan = wp
 
@@ -46,22 +42,32 @@ func (cr *ConsulRegistry) registerConsulWatch(t string) (Watcher, error) {
 
 func (cw *ConsulWatcher) serviceHandler(idx uint64, data interface{}) {
     entries, ok := data.([]*consul.ServiceEntry)
-    fmt.Println(" -- SERVICE HANDLE")
-    fmt.Println(entries)
+    fmt.Println("\n=================================================================")
+    fmt.Printf("### %v :: SERVICE HANDLE ###\n", time.Now())
     if !ok {
         return
     }
 
     cs := &ConsulService{}
 
-    for _, e := range entries {
+    for k, e := range entries {
+        fmt.Println(k)
+
+        fmt.Printf(" [Node] Node: %v (%v)\n", e.Node.Node, e.Node.Address)
+        fmt.Printf(" [Service] ID: %v, Service: %v, Tags: %v, Port: %v, Address: %v\n",
+            e.Service.ID, e.Service.Service, e.Service.Tags, e.Service.Port, e.Service.Address)
+        for _, chk := range e.Checks {
+            fmt.Printf(" [Check] Node: %v, CheckID: %v, Name: %v, Status: %v, Output: %v\n",
+                chk.Node, chk.CheckID, chk.Name, chk.Status, chk.Output)
+        }
+
         cs.Name = e.Service.Service
-        cs.Nodes = append(cs.Nodes, &ConsulServiceNode{
+        cs.Nodes = append(cs.Nodes, &ServiceNode{
             Id: e.Service.ID,
             Address: e.Node.Address,
             Port: strconv.Itoa(e.Service.Port),
         })
-        fmt.Printf(" --> Service: %v - Node: %v (%v)\n", cs.Name, e.Node.Node, e.Node.Address)
+        cs.Checks = e.Checks
     }
 
     consulRegistry.Lock()
@@ -71,7 +77,7 @@ func (cw *ConsulWatcher) serviceHandler(idx uint64, data interface{}) {
 
 func (cw *ConsulWatcher) ServiceHandle(idx uint64, data interface{}) {
     services, ok := data.(map[string][]string)
-    fmt.Println(" -- SERVICES HANDLE")
+    fmt.Printf(" %v -- SERVICES HANDLE\n", time.Now())
     fmt.Println(services)
 
     if !ok {
@@ -80,12 +86,13 @@ func (cw *ConsulWatcher) ServiceHandle(idx uint64, data interface{}) {
 
     // add new watchers
     for service, _ := range services {
+        fmt.Printf("***** svc: %v *****\n", service)
         if _, ok := cw.Watchers[service]; ok {
             continue
         }
 
         wp, err := watch.Parse(map[string]interface{}{
-            "type":    "service",
+            "type": "service",
             "service": service,
         })
 
@@ -118,40 +125,40 @@ func (cw *ConsulWatcher) ServiceHandle(idx uint64, data interface{}) {
     }
 }
 
-func (cw *ConsulWatcher) NodeHandle(idx uint64, data interface{}) {
-    nodes, ok := data.([]*consul.Node)
-    fmt.Println(" -- NODES HANDLE")
-    fmt.Println(nodes)
-    for _, n := range nodes {
-        node := &ClientNode{n.Node, n.Address}
-        fmt.Printf(" --> Node: %v (%v)\n", node.Name, node.Address)
-    }
-
-    if !ok {
-        return
-    }
-
-    //consulRegistry.RLock()
-    //rnodes := consulRegistry.Nodes
-    //consulRegistry.RUnlock()
-
-    // remove unknown nodes from registry
-    //for n, _ := range rnodes {
-    //    if _, ok := nodes[n]; !ok {
-    //        consulRegistry.Lock()
-    //        delete(consulRegistry.Nodes, n)
-    //        consulRegistry.Unlock()
-    //    }
-    //}
-
-    //// remove unknown nodes from watchers
-    //for n, w := range cw.Watchers {
-    //    if _, ok := nodes[n]; !ok {
-    //        w.Stop()
-    //        delete(cw.Watchers, n)
-    //    }
-    //}
-}
+//func (cw *ConsulWatcher) NodeHandle(idx uint64, data interface{}) {
+//    nodes, ok := data.([]*consul.Node)
+//    fmt.Printf(" %v -- NODES HANDLE\n", time.Now())
+//    fmt.Println(nodes)
+//    for _, n := range nodes {
+//        node := &ClientNode{n.Node, n.Address}
+//        fmt.Printf(" --> Node: %v (%v)\n", node.Name, node.Address)
+//    }
+//
+//    if !ok {
+//        return
+//    }
+//
+//    //consulRegistry.RLock()
+//    //rnodes := consulRegistry.Nodes
+//    //consulRegistry.RUnlock()
+//
+//    // remove unknown nodes from registry
+//    //for n, _ := range rnodes {
+//    //    if _, ok := nodes[n]; !ok {
+//    //        consulRegistry.Lock()
+//    //        delete(consulRegistry.Nodes, n)
+//    //        consulRegistry.Unlock()
+//    //    }
+//    //}
+//
+//    //// remove unknown nodes from watchers
+//    //for n, w := range cw.Watchers {
+//    //    if _, ok := nodes[n]; !ok {
+//    //        w.Stop()
+//    //        delete(cw.Watchers, n)
+//    //    }
+//    //}
+//}
 
 func (cw *ConsulWatcher) Stop() {
     if cw.WatchPlan == nil {

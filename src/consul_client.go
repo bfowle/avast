@@ -34,18 +34,16 @@ type ConsulNode struct {
     Checks    []*consul.HealthCheck   `json:"checks"`
 }
 
-type ConsulServiceNode struct {
+type ServiceNode struct {
     Id      string  `json:"id"`
-    Name    string  `json:"name"`
-    Host    string  `json:"host"`
-    Port    string  `json:"port"`
     Address string  `json:"address"`
-    URL     string  `json:"url"`
+    Port    string  `json:"port"`
 }
 
 type ConsulService struct {
     Name    string
-    Nodes   []*ConsulServiceNode
+    Nodes   []*ServiceNode
+    Checks  []*consul.HealthCheck
 }
 
 type ConsulWatcher struct {
@@ -87,8 +85,7 @@ func registerConsul() {
     // - https://github.com/hashicorp/consul/blob/master/watch/funcs.go
     // - https://github.com/hashicorp/consul/blob/master/watch/funcs_test.go
     //
-    // @TODO: checks: {status: passing|warning|failing|critical}
+    // Checks: {status: passing|warning|failing|critical}
 
-    consulRegistry.registerConsulWatch("services")
-    consulRegistry.registerConsulWatch("nodes")
+    consulRegistry.registerConsulWatch()
 }
