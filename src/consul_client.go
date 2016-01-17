@@ -17,12 +17,10 @@ package main
 import (
     "sync"
 
-    consul "github.com/hashicorp/consul/api"
-    "github.com/hashicorp/consul/watch"
+    consulapi "github.com/hashicorp/consul/api"
 )
 
 var consulRegistry *ConsulRegistry
-var consulWatcher *ConsulWatcher
 
 type ClientNode struct {
     Name        string  `json:"name"`
@@ -31,8 +29,8 @@ type ClientNode struct {
 
 type ConsulNode struct {
     *ClientNode
-    Services  []*consul.AgentService  `json:"services"`
-    Checks    []*consul.HealthCheck   `json:"checks"`
+    Services  []*consulapi.AgentService  `json:"services"`
+    Checks    []*consulapi.HealthCheck   `json:"checks"`
 }
 
 type ServiceNode struct {
@@ -41,35 +39,20 @@ type ServiceNode struct {
     Port    string  `json:"port"`
 }
 
-type ConsulService struct {
-    Name    string
-    Nodes   []*ServiceNode
-    Checks  []*consul.HealthCheck
-}
-
-type ConsulWatcher struct {
-    WatchPlan   *watch.WatchPlan
-    Watchers    map[string]*watch.WatchPlan
-}
-
-type Watcher interface {
-    Stop()
-}
-
 type ConsulRegistry struct {
     Address     string
-    Client      *consul.Client
-    Agent       *consul.Agent
-    Catalog     *consul.Catalog
-    Health      *consul.Health
-    Services    map[string]*ConsulService
+    Client      *consulapi.Client
+    Agent       *consulapi.Agent
+    Catalog     *consulapi.Catalog
+    Health      *consulapi.Health
+    Services    map[string]*consulapi.ServiceEntry
     Nodes       []*ConsulNode
     sync.RWMutex
 }
 
 func registerConsul() {
-    config := consul.DefaultConfig()
-    c, err := consul.NewClient(config)
+    config := consulapi.DefaultConfig()
+    c, err := consulapi.NewClient(config)
     if err != nil {
     }
 
@@ -79,20 +62,11 @@ func registerConsul() {
         Agent:      c.Agent(),
         Catalog:    c.Catalog(),
         Health:     c.Health(),
-        Services:   make(map[string]*ConsulService),
+        Services:   make(map[string]*consulapi.ServiceEntry),
     }
 
     // Watchers: key, keyprefix, services, nodes, service, checks, event
     // - https://github.com/hashicorp/consul/blob/master/watch/funcs.go
     // Checks: {status: passing|warning|failing|critical}
-
-    consulWatcher = &ConsulWatcher{
-        Watchers: make(map[string]*watch.WatchPlan),
-    }
-
     // @TODO: on watch results, add to "trend" to show stats over time
-
-    consulRegistry.registerConsulWatch("services")
-    consulRegistry.registerConsulWatch("nodes")
-    consulRegistry.registerConsulWatch("checks")
 }

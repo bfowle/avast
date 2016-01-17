@@ -19,12 +19,12 @@ import (
     "net/http"
 
     "github.com/gorilla/mux"
-    consul "github.com/hashicorp/consul/api"
+    consulapi "github.com/hashicorp/consul/api"
 )
 
 func (cr *ConsulRegistry) NodesHandler(w http.ResponseWriter, r *http.Request) (interface{}, error) {
     vars := mux.Vars(r)
-    options := &consul.QueryOptions{Datacenter: vars["dc"]}
+    options := &consulapi.QueryOptions{Datacenter: vars["dc"]}
 
     nodes, _, err := cr.Catalog.Nodes(options)
     if err != nil {
@@ -46,7 +46,7 @@ func (cr *ConsulRegistry) NodesHandler(w http.ResponseWriter, r *http.Request) (
 
 func (cr *ConsulRegistry) NodeHandler(w http.ResponseWriter, r *http.Request) (interface{}, error) {
     vars := mux.Vars(r)
-    options := &consul.QueryOptions{Datacenter: vars["dc"]}
+    options := &consulapi.QueryOptions{Datacenter: vars["dc"]}
 
     node, _, err := cr.Catalog.Node(vars["name"], options)
     if err != nil {
@@ -62,7 +62,7 @@ func (cr *ConsulRegistry) NodeHandler(w http.ResponseWriter, r *http.Request) (i
         return nil, nil
     }
 
-    services := make([]*consul.AgentService, 0, len(node.Services))
+    services := make([]*consulapi.AgentService, 0, len(node.Services))
     for  _, s := range node.Services {
         services = append(services, s)
     }

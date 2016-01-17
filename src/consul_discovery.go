@@ -15,192 +15,162 @@
 package main
 
 import (
+    "encoding/json"
     "fmt"
-    "strconv"
     "time"
 
-    consul "github.com/hashicorp/consul/api"
+    consulapi "github.com/hashicorp/consul/api"
     "github.com/hashicorp/consul/watch"
 )
 
-func (cr *ConsulRegistry) registerConsulWatch(t string) error {
-    wp, err := watch.Parse(map[string]interface{}{"type": t})
+type Watcher struct {
+    addr        string
+    wp          *watch.WatchPlan
+    watchers    map[string]*watch.WatchPlan
+}
+
+type WatchEvent struct {
+    Type        string      `json:"type"`
+    Data        interface{} `json:"data"`
+    Timestamp   time.Time   `json:"timestamp"`
+}
+
+func (cr *ConsulRegistry) registerWatcher(watchType string) error {
+    w, err := newWatcher(cr.Address, watchType)
     if err != nil {
+        fmt.Println(err)
         return err
     }
-
-    switch t {
-    case "services":
-        wp.Handler = consulWatcher.ServiceHandle
-    case "nodes":
-        wp.Handler = consulWatcher.NodeHandle
-    case "checks":
-        wp.Handler = consulWatcher.CheckHandle
-    }
-    go wp.Run(cr.Address)
-    consulWatcher.WatchPlan = wp
+    go w.Run()
 
     return nil
 }
 
-func (consulWatcher *ConsulWatcher) serviceHandler(idx uint64, data interface{}) {
-    entries, ok := data.([]*consul.ServiceEntry)
-    fmt.Println("\n=================================================================")
-    fmt.Printf("### %v :: SERVICE HANDLE ###\n", time.Now())
-    if !ok {
-        return
+func (w *Watcher) registerServiceWatcher(service string) error {
+    wp, err := watch.Parse(map[string]interface{}{
+        "type": "service",
+        "service": service,
+    })
+    if err != nil {
+        return err
     }
 
-    cs := &ConsulService{}
+    wp.Handler = func(idx uint64, data interface{}) {
+        switch d := data.(type) {
+        // service
+        case []*consulapi.ServiceEntry:
+            for _, i := range d {
+                fmt.Printf("[ %v ]\t%v\n", time.Now(), i)
+                broadcastData("service", &i)
 
-    for k, e := range entries {
-        fmt.Println(k)
-
-        fmt.Printf(" [Node] Node: %v (%v)\n", e.Node.Node, e.Node.Address)
-        fmt.Printf(" [Service] ID: %v, Service: %v, Tags: %v, Port: %v, Address: %v\n",
-            e.Service.ID, e.Service.Service, e.Service.Tags, e.Service.Port, e.Service.Address)
-        for _, chk := range e.Checks {
-            fmt.Printf(" [Check] Node: %v, CheckID: %v, Name: %v, Status: %v, Output: %v\n",
-                chk.Node, chk.CheckID, chk.Name, chk.Status, chk.Output)
+                consulRegistry.Lock()
+                consulRegistry.Services[i.Service.Service] = i
+                consulRegistry.Unlock()
+            }
         }
-
-        cs.Name = e.Service.Service
-        cs.Nodes = append(cs.Nodes, &ServiceNode{
-            Id: e.Service.ID,
-            Address: e.Node.Address,
-            Port: strconv.Itoa(e.Service.Port),
-        })
-        cs.Checks = e.Checks
     }
 
-    consulRegistry.Lock()
-    consulRegistry.Services[cs.Name] = cs
-    consulRegistry.Unlock()
+    go wp.Run(w.addr)
+    w.watchers[service] = wp
+    return nil
 }
 
-func (consulWatcher *ConsulWatcher) ServiceHandle(idx uint64, data interface{}) {
-    services, ok := data.(map[string][]string)
-    fmt.Printf(" %v -- SERVICES HANDLE\n", time.Now())
-    fmt.Println(services)
-
-    if !ok {
-        return
+func newWatcher(addr string, watchType string) (*Watcher, error) {
+    wp, err := watch.Parse(map[string]interface{}{
+        "type": watchType,
+    })
+    if err != nil {
+        return nil, err
     }
 
-    // add new watchers
-    for service, _ := range services {
-        fmt.Printf("***** svc: %v *****\n", service)
-        if _, ok := consulWatcher.Watchers[service]; ok {
-            continue
-        }
+    w := &Watcher{
+        addr,
+        wp,
+        make(map[string]*watch.WatchPlan),
+    }
 
-        wp, err := watch.Parse(map[string]interface{}{
-            "type": "service",
-            "service": service,
-        })
+    wp.Handler = func(idx uint64, data interface{}) {
+        // @TODO: type switch seems to convert back to interface{}
+        // if applying multiple types on the case (e.g. case []*A, []*B
+        // it would be nice to combine these case statements for similar
+        // types; try using reflect.TypeOf instead, perhaps
+        switch d := data.(type) {
+        // nodes
+        case []*consulapi.Node:
+            for _, i := range d {
+                fmt.Printf("[ %v ]\t%v\n", time.Now(), i)
+                broadcastData(watchType, &i)
+            }
+        // checks
+        case []*consulapi.HealthCheck:
+            for _, i := range d {
+                fmt.Printf("[ %v ]\t%v\n", time.Now(), i)
+                broadcastData(watchType, &i)
+            }
+        // services
+        case map[string][]string:
+            for i, _ := range d {
+                fmt.Printf("[ %v ]\t%v\n", time.Now(), i)
+                if _, ok := w.watchers[i]; ok {
+                    continue
+                }
+                w.registerServiceWatcher(i)
+            }
 
-        if err == nil {
-            wp.Handler = consulWatcher.serviceHandler
-            go wp.Run(consulRegistry.Address)
-            consulWatcher.Watchers[service] = wp
+            consulRegistry.RLock()
+            rs := consulRegistry.Services
+            consulRegistry.RUnlock()
+
+            // remove unknown services from registry
+            for s, _ := range rs {
+                if _, ok := d[s]; !ok {
+                    consulRegistry.Lock()
+                    delete(consulRegistry.Services, s)
+                    consulRegistry.Unlock()
+                }
+            }
+
+            // remove unknown services from watchers
+            for i, svc := range w.watchers {
+                if _, ok := d[i]; !ok {
+                    svc.Stop()
+                    delete(w.watchers, i)
+                }
+            }
         }
     }
 
-    consulRegistry.RLock()
-    rservices := consulRegistry.Services
-    consulRegistry.RUnlock()
-
-    // remove unknown services from registry
-    for s, _ := range rservices {
-        if _, ok := services[s]; !ok {
-            consulRegistry.Lock()
-            delete(consulRegistry.Services, s)
-            consulRegistry.Unlock()
-        }
-    }
-
-    // remove unknown services from watchers
-    for s, w := range consulWatcher.Watchers {
-        if _, ok := services[s]; !ok {
-            w.Stop()
-            delete(consulWatcher.Watchers, s)
-        }
-    }
+    return w, nil
 }
 
-func (consulWatcher *ConsulWatcher) NodeHandle(idx uint64, data interface{}) {
-    nodes, ok := data.([]*consul.Node)
-    fmt.Printf(" %v -- NODES HANDLE\n", time.Now())
-    fmt.Println(nodes)
-    for _, n := range nodes {
-        node := &ClientNode{n.Node, n.Address}
-        fmt.Printf(" --> Node: %v (%v)\n", node.Name, node.Address)
+func broadcastData(watchType string, data interface{}) {
+    evt := &WatchEvent {
+        watchType,
+        data,
+        time.Now(),
     }
 
-    if !ok {
-        return
+    msg, err := json.Marshal(evt)
+    if err != nil {
+        fmt.Println(err)
     }
-
-    //consulRegistry.RLock()
-    //rnodes := consulRegistry.Nodes
-    //consulRegistry.RUnlock()
-
-    // remove unknown nodes from registry
-    //for n, _ := range rnodes {
-    //    if _, ok := nodes[n]; !ok {
-    //        consulRegistry.Lock()
-    //        delete(consulRegistry.Nodes, n)
-    //        consulRegistry.Unlock()
-    //    }
-    //}
-
-    //// remove unknown nodes from watchers
-    //for n, w := range consulWatcher.Watchers {
-    //    if _, ok := nodes[n]; !ok {
-    //        w.Stop()
-    //        delete(consulWatcher.Watchers, n)
-    //    }
-    //}
+    wsHub.broadcast <- msg
 }
 
-func (consulWatcher *ConsulWatcher) CheckHandle(idx uint64, data interface{}) {
-    checks, ok := data.([]*consul.HealthCheck)
-    fmt.Printf(" %v -- HEALTH HANDLE\n", time.Now())
-    fmt.Println(checks)
-    for _, c := range checks {
-        fmt.Printf(" --> CheckID: %v, Name: %v, Node: %v, Status: %v, Output: %v\n",
-            c.CheckID, c.Name, c.Node, c.Status, c.Output)
-    }
 
-    if !ok {
-        return
-    }
-
-    //consulRegistry.RLock()
-    //rnodes := consulRegistry.Nodes
-    //consulRegistry.RUnlock()
-
-    // remove unknown nodes from registry
-    //for n, _ := range rnodes {
-    //    if _, ok := nodes[n]; !ok {
-    //        consulRegistry.Lock()
-    //        delete(consulRegistry.Nodes, n)
-    //        consulRegistry.Unlock()
-    //    }
-    //}
-
-    //// remove unknown nodes from watchers
-    //for n, w := range consulWatcher.Watchers {
-    //    if _, ok := nodes[n]; !ok {
-    //        w.Stop()
-    //        delete(consulWatcher.Watchers, n)
-    //    }
-    //}
+func (w *Watcher) Run() {
+    w.wp.Run(w.addr)
 }
 
-func (consulWatcher *ConsulWatcher) Stop() {
-    if consulWatcher.WatchPlan == nil {
+func (w *Watcher) Stop() {
+    if w.wp == nil {
         return
     }
-    consulWatcher.WatchPlan.Stop()
+    w.wp.Stop()
+}
+
+func (c *connection) echoDiscovery() {
+    consulRegistry.registerWatcher("nodes")
+    consulRegistry.registerWatcher("checks")
+    consulRegistry.registerWatcher("services")
 }

@@ -19,12 +19,12 @@ import (
     "net/http"
 
     "github.com/gorilla/mux"
-    consul "github.com/hashicorp/consul/api"
+    consulapi "github.com/hashicorp/consul/api"
 )
 
 func (cr *ConsulRegistry) HealthHandler(w http.ResponseWriter, r *http.Request) (interface{}, error) {
     vars := mux.Vars(r)
-    options := &consul.QueryOptions{Datacenter: vars["dc"]}
+    options := &consulapi.QueryOptions{Datacenter: vars["dc"]}
 
     check, _, err := cr.Health.Node(vars["name"], options)
     if err != nil {

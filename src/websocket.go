@@ -148,6 +148,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) (interface{}, error) {
 
     go c.writePump()
     go c.echoEvents()
+    go c.echoDiscovery()
     c.readPump()
 
     return true, nil
