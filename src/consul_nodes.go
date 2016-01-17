@@ -26,7 +26,7 @@ func (cr *ConsulRegistry) NodesHandler(w http.ResponseWriter, r *http.Request) (
     vars := mux.Vars(r)
     options := &consulapi.QueryOptions{Datacenter: vars["dc"]}
 
-    nodes, _, err := cr.Catalog.Nodes(options)
+    nodes, _, err := cr.catalog.Nodes(options)
     if err != nil {
         w.WriteHeader(http.StatusBadRequest)
         w.Write([]byte(fmt.Sprintf("Consul endpoint failed: %v", err)))
@@ -48,14 +48,14 @@ func (cr *ConsulRegistry) NodeHandler(w http.ResponseWriter, r *http.Request) (i
     vars := mux.Vars(r)
     options := &consulapi.QueryOptions{Datacenter: vars["dc"]}
 
-    node, _, err := cr.Catalog.Node(vars["name"], options)
+    node, _, err := cr.catalog.Node(vars["name"], options)
     if err != nil {
         w.WriteHeader(http.StatusBadRequest)
         w.Write([]byte(fmt.Sprintf("Consul endpoint failed: %v", err)))
         return nil, nil
     }
 
-    health, _, err := cr.Health.Node(vars["name"], options)
+    health, _, err := cr.health.Node(vars["name"], options)
     if err != nil {
         w.WriteHeader(http.StatusBadRequest)
         w.Write([]byte(fmt.Sprintf("Consul endpoint failed: %v", err)))
@@ -72,7 +72,7 @@ func (cr *ConsulRegistry) NodeHandler(w http.ResponseWriter, r *http.Request) (i
             Name: node.Node.Node,
             Address: node.Node.Address,
         },
-        Services:   services,
-        Checks:     health,
+        Services: services,
+        Checks: health,
     }, nil
 }

@@ -30,13 +30,14 @@ type Watcher struct {
 }
 
 type WatchEvent struct {
+    From        string      `json:"from"`
     Type        string      `json:"type"`
     Data        interface{} `json:"data"`
     Timestamp   time.Time   `json:"timestamp"`
 }
 
 func (cr *ConsulRegistry) registerWatcher(watchType string) error {
-    w, err := newWatcher(cr.Address, watchType)
+    w, err := newWatcher(cr.addr, watchType)
     if err != nil {
         fmt.Println(err)
         return err
@@ -64,7 +65,7 @@ func (w *Watcher) registerServiceWatcher(service string) error {
                 broadcastData("service", &i)
 
                 consulRegistry.Lock()
-                consulRegistry.Services[i.Service.Service] = i
+                consulRegistry.services[i.Service.Service] = i
                 consulRegistry.Unlock()
             }
         }
@@ -118,14 +119,14 @@ func newWatcher(addr string, watchType string) (*Watcher, error) {
             }
 
             consulRegistry.RLock()
-            rs := consulRegistry.Services
+            rs := consulRegistry.services
             consulRegistry.RUnlock()
 
             // remove unknown services from registry
             for s, _ := range rs {
                 if _, ok := d[s]; !ok {
                     consulRegistry.Lock()
-                    delete(consulRegistry.Services, s)
+                    delete(consulRegistry.services, s)
                     consulRegistry.Unlock()
                 }
             }
@@ -145,6 +146,7 @@ func newWatcher(addr string, watchType string) (*Watcher, error) {
 
 func broadcastData(watchType string, data interface{}) {
     evt := &WatchEvent {
+        "consul",
         watchType,
         data,
         time.Now(),

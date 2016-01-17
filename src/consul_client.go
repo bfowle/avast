@@ -15,6 +15,7 @@
 package main
 
 import (
+    "fmt"
     "sync"
 
     consulapi "github.com/hashicorp/consul/api"
@@ -33,20 +34,14 @@ type ConsulNode struct {
     Checks    []*consulapi.HealthCheck   `json:"checks"`
 }
 
-type ServiceNode struct {
-    Id      string  `json:"id"`
-    Address string  `json:"address"`
-    Port    string  `json:"port"`
-}
-
 type ConsulRegistry struct {
-    Address     string
-    Client      *consulapi.Client
-    Agent       *consulapi.Agent
-    Catalog     *consulapi.Catalog
-    Health      *consulapi.Health
-    Services    map[string]*consulapi.ServiceEntry
-    Nodes       []*ConsulNode
+    addr        string
+    client      *consulapi.Client
+    agent       *consulapi.Agent
+    catalog     *consulapi.Catalog
+    health      *consulapi.Health
+    services    map[string]*consulapi.ServiceEntry
+    nodes       []*ConsulNode
     sync.RWMutex
 }
 
@@ -54,15 +49,17 @@ func registerConsul() {
     config := consulapi.DefaultConfig()
     c, err := consulapi.NewClient(config)
     if err != nil {
+        fmt.Println(err)
+        return
     }
 
     consulRegistry = &ConsulRegistry{
-        Address:    config.Address,
-        Client:     c,
-        Agent:      c.Agent(),
-        Catalog:    c.Catalog(),
-        Health:     c.Health(),
-        Services:   make(map[string]*consulapi.ServiceEntry),
+        addr:       config.Address,
+        client:     c,
+        agent:      c.Agent(),
+        catalog:    c.Catalog(),
+        health:     c.Health(),
+        services:   make(map[string]*consulapi.ServiceEntry),
     }
 
     // Watchers: key, keyprefix, services, nodes, service, checks, event

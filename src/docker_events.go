@@ -18,10 +18,18 @@ import (
     "encoding/json"
     "fmt"
     "io"
+    "time"
 
     "github.com/docker/engine-api/types"
     "github.com/docker/engine-api/types/events"
 )
+
+type DockerEvent struct {
+    From        string          `json:"from"`
+    Type        string          `json:"type"`
+    Data        *events.Message `json:"data"`
+    Timestamp   time.Time       `json:"timestamp"`
+}
 
 func (c *connection) echoEvents() {
     fmt.Printf(" --> Connected to client (%v)...\n", c.ws.RemoteAddr())
@@ -34,18 +42,23 @@ func (c *connection) echoEvents() {
     defer r.Close()
 
     d := json.NewDecoder(r)
-    messages := make(chan events.Message)
+    messages := make(chan *DockerEvent)
 
     go func() {
         for {
-            var event events.Message
-            if err := d.Decode(&event); err != nil {
+            var data events.Message
+            if err := d.Decode(&data); err != nil {
                 if err == io.EOF {
                     break
                 }
                 fmt.Println(err)
             }
-            messages <- event
+            messages <- &DockerEvent{
+                "docker",
+                "event",
+                &data,
+                time.Now(),
+            }
         }
     }()
 

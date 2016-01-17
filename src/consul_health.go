@@ -26,7 +26,7 @@ func (cr *ConsulRegistry) HealthHandler(w http.ResponseWriter, r *http.Request) 
     vars := mux.Vars(r)
     options := &consulapi.QueryOptions{Datacenter: vars["dc"]}
 
-    check, _, err := cr.Health.Node(vars["name"], options)
+    check, _, err := cr.health.Node(vars["name"], options)
     if err != nil {
         w.WriteHeader(http.StatusBadRequest)
         w.Write([]byte(fmt.Sprintf("Consul endpoint failed: %v", err)))
