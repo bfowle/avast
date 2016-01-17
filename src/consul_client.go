@@ -22,6 +22,7 @@ import (
 )
 
 var consulRegistry *ConsulRegistry
+var consulWatcher *ConsulWatcher
 
 type ClientNode struct {
     Name        string  `json:"name"`
@@ -86,6 +87,10 @@ func registerConsul() {
     // - https://github.com/hashicorp/consul/blob/master/watch/funcs_test.go
     //
     // Checks: {status: passing|warning|failing|critical}
+
+    consulWatcher = &ConsulWatcher{
+        Watchers: make(map[string]*watch.WatchPlan),
+    }
 
     consulRegistry.registerConsulWatch("services")
     consulRegistry.registerConsulWatch("nodes")

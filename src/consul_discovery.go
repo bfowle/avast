@@ -23,31 +23,27 @@ import (
     "github.com/hashicorp/consul/watch"
 )
 
-func (cr *ConsulRegistry) registerConsulWatch(t string) (Watcher, error) {
-    cw := &ConsulWatcher{
-        Watchers: make(map[string]*watch.WatchPlan),
-    }
-
+func (cr *ConsulRegistry) registerConsulWatch(t string) error {
     wp, err := watch.Parse(map[string]interface{}{"type": t})
     if err != nil {
-        return nil, err
+        return err
     }
 
     switch t {
     case "services":
-        wp.Handler = cw.ServiceHandle
+        wp.Handler = consulWatcher.ServiceHandle
     case "nodes":
-        wp.Handler = cw.NodeHandle
+        wp.Handler = consulWatcher.NodeHandle
     case "checks":
-        wp.Handler = cw.CheckHandle
+        wp.Handler = consulWatcher.CheckHandle
     }
     go wp.Run(cr.Address)
-    cw.WatchPlan = wp
+    consulWatcher.WatchPlan = wp
 
-    return cw, nil
+    return nil
 }
 
-func (cw *ConsulWatcher) serviceHandler(idx uint64, data interface{}) {
+func (consulWatcher *ConsulWatcher) serviceHandler(idx uint64, data interface{}) {
     entries, ok := data.([]*consul.ServiceEntry)
     fmt.Println("\n=================================================================")
     fmt.Printf("### %v :: SERVICE HANDLE ###\n", time.Now())
@@ -82,7 +78,7 @@ func (cw *ConsulWatcher) serviceHandler(idx uint64, data interface{}) {
     consulRegistry.Unlock()
 }
 
-func (cw *ConsulWatcher) ServiceHandle(idx uint64, data interface{}) {
+func (consulWatcher *ConsulWatcher) ServiceHandle(idx uint64, data interface{}) {
     services, ok := data.(map[string][]string)
     fmt.Printf(" %v -- SERVICES HANDLE\n", time.Now())
     fmt.Println(services)
@@ -94,7 +90,7 @@ func (cw *ConsulWatcher) ServiceHandle(idx uint64, data interface{}) {
     // add new watchers
     for service, _ := range services {
         fmt.Printf("***** svc: %v *****\n", service)
-        if _, ok := cw.Watchers[service]; ok {
+        if _, ok := consulWatcher.Watchers[service]; ok {
             continue
         }
 
@@ -104,9 +100,9 @@ func (cw *ConsulWatcher) ServiceHandle(idx uint64, data interface{}) {
         })
 
         if err == nil {
-            wp.Handler = cw.serviceHandler
+            wp.Handler = consulWatcher.serviceHandler
             go wp.Run(consulRegistry.Address)
-            cw.Watchers[service] = wp
+            consulWatcher.Watchers[service] = wp
         }
     }
 
@@ -124,15 +120,15 @@ func (cw *ConsulWatcher) ServiceHandle(idx uint64, data interface{}) {
     }
 
     // remove unknown services from watchers
-    for s, w := range cw.Watchers {
+    for s, w := range consulWatcher.Watchers {
         if _, ok := services[s]; !ok {
             w.Stop()
-            delete(cw.Watchers, s)
+            delete(consulWatcher.Watchers, s)
         }
     }
 }
 
-func (cw *ConsulWatcher) NodeHandle(idx uint64, data interface{}) {
+func (consulWatcher *ConsulWatcher) NodeHandle(idx uint64, data interface{}) {
     nodes, ok := data.([]*consul.Node)
     fmt.Printf(" %v -- NODES HANDLE\n", time.Now())
     fmt.Println(nodes)
@@ -159,15 +155,15 @@ func (cw *ConsulWatcher) NodeHandle(idx uint64, data interface{}) {
     //}
 
     //// remove unknown nodes from watchers
-    //for n, w := range cw.Watchers {
+    //for n, w := range consulWatcher.Watchers {
     //    if _, ok := nodes[n]; !ok {
     //        w.Stop()
-    //        delete(cw.Watchers, n)
+    //        delete(consulWatcher.Watchers, n)
     //    }
     //}
 }
 
-func (cw *ConsulWatcher) CheckHandle(idx uint64, data interface{}) {
+func (consulWatcher *ConsulWatcher) CheckHandle(idx uint64, data interface{}) {
     checks, ok := data.([]*consul.HealthCheck)
     fmt.Printf(" %v -- HEALTH HANDLE\n", time.Now())
     fmt.Println(checks)
@@ -194,17 +190,17 @@ func (cw *ConsulWatcher) CheckHandle(idx uint64, data interface{}) {
     //}
 
     //// remove unknown nodes from watchers
-    //for n, w := range cw.Watchers {
+    //for n, w := range consulWatcher.Watchers {
     //    if _, ok := nodes[n]; !ok {
     //        w.Stop()
-    //        delete(cw.Watchers, n)
+    //        delete(consulWatcher.Watchers, n)
     //    }
     //}
 }
 
-func (cw *ConsulWatcher) Stop() {
-    if cw.WatchPlan == nil {
+func (consulWatcher *ConsulWatcher) Stop() {
+    if consulWatcher.WatchPlan == nil {
         return
     }
-    cw.WatchPlan.Stop()
+    consulWatcher.WatchPlan.Stop()
 }
