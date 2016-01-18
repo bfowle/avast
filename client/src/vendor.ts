@@ -1,6 +1,6 @@
 // polyfills
 import 'es6-shim';
-// (these modules are what are in 'angular2/bundles/angular2-polyfills' so don't use that here)
+// these modules are what are in 'angular2/bundles/angular2-polyfills' so don't use that here
 import 'es6-promise';
 import 'zone.js/lib/browser/zone-microtask';
 
@@ -12,7 +12,7 @@ if (process.env.ENV !== 'production') {
 }
 
 if (process.env.ENV === 'production') {
-  // Reflect with es7-reflect-metadata/reflect-metadata is added
+  // reflect with es7-reflect-metadata/reflect-metadata is added
   // by webpack.prod.config ProvidePlugin
   let ngCore = require('angular2/core');
   ngCore.enableProdMode();

@@ -37,7 +37,7 @@ func (c *connection) echoEvents() {
     options := types.EventsOptions{}
     r, err := cli.Events(options)
     if err != nil {
-        panic(err)
+        fmt.Println(err)
     }
     defer r.Close()
 

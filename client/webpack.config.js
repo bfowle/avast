@@ -124,12 +124,17 @@ module.exports = {
 
     // our webpack development server config
     devServer: {
-        port: metadata.port,
         host: metadata.host,
+        port: metadata.port,
         proxy: {
-            '/api/v1/*': {
+            '/api': {
                 target: 'http://localhost:8080',
                 secure: false
+            },
+            '/ws': {
+                target: 'ws://localhost:8080',
+                logLevel: 'debug',
+                ws: true
             }
         },
         historyApiFallback: true,
