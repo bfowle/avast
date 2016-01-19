@@ -1,17 +1,3 @@
-// Copyright 2016 Brett Fowle
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package main
 
 import (
@@ -22,9 +8,9 @@ import (
     "github.com/gorilla/mux"
 )
 
-func dockerContainersHandler(w http.ResponseWriter, r *http.Request) (interface{}, error) {
+func (dc *DockerClient) ContainersHandler(w http.ResponseWriter, r *http.Request) (interface{}, error) {
     options := types.ContainerListOptions{All: true}
-    containers, err := cli.ContainerList(options)
+    containers, err := dc.ContainerList(options)
     if err != nil {
         w.WriteHeader(http.StatusBadRequest)
         w.Write([]byte(fmt.Sprintf("Docker engine endpoint failed: %v", err)))
@@ -34,10 +20,10 @@ func dockerContainersHandler(w http.ResponseWriter, r *http.Request) (interface{
     return containers, nil
 }
 
-func dockerContainerHandler(w http.ResponseWriter, r *http.Request) (interface{}, error) {
+func (dc *DockerClient) ContainerHandler(w http.ResponseWriter, r *http.Request) (interface{}, error) {
     vars := mux.Vars(r)
 
-    container, err := cli.ContainerInspect(vars["name"])
+    container, err := dc.ContainerInspect(vars["name"])
     if err != nil {
         w.WriteHeader(http.StatusBadRequest)
         w.Write([]byte(fmt.Sprintf("Docker engine endpoint failed: %v", err)))

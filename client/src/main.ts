@@ -7,18 +7,21 @@ const thunkMiddleware = require('redux-thunk');
 import {AppStore} from 'angular2-redux';
 import 'rxjs/add/operator/map';
 
-var socket = new WebSocket('ws://localhost:3000/ws');
+var ReconnectingWebSocket = require('ReconnectingWebSocket');
+var socket = new ReconnectingWebSocket(
+  `${window.location.origin.replace('http', 'ws')}/ws`, null, { debug: true }
+);
 
 socket.onopen = function() {
   console.log('on open');
 };
 
-socket.onmessage = function (e) {
+socket.onmessage = function(e) {
   console.log('on message');
   console.log(e);
 };
 
-socket.onclose = function () {
+socket.onclose = function() {
   console.log('on close');
 };
 

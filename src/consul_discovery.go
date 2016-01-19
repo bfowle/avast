@@ -1,17 +1,3 @@
-// Copyright 2016 Brett Fowle
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package main
 
 import (
@@ -58,7 +44,6 @@ func (w *Watcher) registerServiceWatcher(service string) error {
 
     wp.Handler = func(idx uint64, data interface{}) {
         switch d := data.(type) {
-        // service
         case []*consulapi.ServiceEntry:
             for _, i := range d {
                 fmt.Printf("[ %v ]\t%v\n", time.Now(), i)
@@ -73,13 +58,12 @@ func (w *Watcher) registerServiceWatcher(service string) error {
 
     go wp.Run(w.addr)
     w.watchers[service] = wp
+
     return nil
 }
 
 func newWatcher(addr string, watchType string) (*Watcher, error) {
-    wp, err := watch.Parse(map[string]interface{}{
-        "type": watchType,
-    })
+    wp, err := watch.Parse(map[string]interface{}{"type": watchType})
     if err != nil {
         return nil, err
     }
@@ -159,7 +143,6 @@ func broadcastData(watchType string, data interface{}) {
     wsHub.broadcast <- msg
 }
 
-
 func (w *Watcher) Run() {
     w.wp.Run(w.addr)
 }
@@ -171,8 +154,8 @@ func (w *Watcher) Stop() {
     w.wp.Stop()
 }
 
-func (c *connection) echoDiscovery() {
-    consulRegistry.registerWatcher("nodes")
-    consulRegistry.registerWatcher("checks")
-    consulRegistry.registerWatcher("services")
+func (cr *ConsulRegistry) EchoDiscovery() {
+    cr.registerWatcher("nodes")
+    cr.registerWatcher("checks")
+    cr.registerWatcher("services")
 }

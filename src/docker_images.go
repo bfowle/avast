@@ -1,17 +1,3 @@
-// Copyright 2016 Brett Fowle
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package main
 
 import (
@@ -21,6 +7,7 @@ import (
 
     "github.com/docker/engine-api/types"
     "github.com/dustin/go-humanize"
+    "github.com/gorilla/mux"
 )
 
 type ImageNode struct {
@@ -44,9 +31,9 @@ func (node *ImageNode) add(parent string, nodes []*ImageNode) {
     }
 }
 
-func dockerImagesHandler(w http.ResponseWriter, r *http.Request) (interface{}, error) {
+func (dc *DockerClient) ImagesHandler(w http.ResponseWriter, r *http.Request) (interface{}, error) {
     options := types.ImageListOptions{All: true}
-    images, err := cli.ImageList(options)
+    images, err := dc.ImageList(options)
     if err != nil {
         w.WriteHeader(http.StatusBadRequest)
         w.Write([]byte(fmt.Sprintf("Docker engine endpoint failed: %v", err)))
@@ -72,4 +59,17 @@ func dockerImagesHandler(w http.ResponseWriter, r *http.Request) (interface{}, e
     root.add("", nodes)
 
     return root, nil
+}
+
+func (dc *DockerClient) HistoryHandler(w http.ResponseWriter, r *http.Request) (interface{}, error) {
+    vars := mux.Vars(r)
+
+    history, err := dc.ImageHistory(vars["id"])
+    if err != nil {
+        w.WriteHeader(http.StatusBadRequest)
+        w.Write([]byte(fmt.Sprintf("Docker engine endpoint failed: %v", err)))
+        return nil, nil
+    }
+
+    return history, nil
 }
