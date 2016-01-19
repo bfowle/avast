@@ -5,13 +5,14 @@
 
 # Server-side
 
+### Dependencies
+
+- `go` (1.4+)
+- Vendored dependencies through `gb`
+
 ### Building
 
 ```
-get get ./src/
-# recommended:
-# gb vendor fetch --all
-
 go build -o bin/avast ./src/
 ```
 

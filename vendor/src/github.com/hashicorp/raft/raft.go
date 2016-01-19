@@ -690,7 +690,7 @@ func (r *Raft) runCandidate() {
 			// Check if the vote is granted
 			if vote.Granted {
 				grantedVotes++
-				r.logger.Printf("[DEBUG] raft: Vote granted. Tally: %d", grantedVotes)
+				r.logger.Printf("[DEBUG] raft: Vote granted from %s. Tally: %d", vote.voter, grantedVotes)
 			}
 
 			// Check if we've become the leader
@@ -849,6 +849,14 @@ func (r *Raft) startReplication(peer string) {
 // leaderLoop is the hot loop for a leader. It is invoked
 // after all the various leader setup is done.
 func (r *Raft) leaderLoop() {
+	// stepDown is used to track if there is an inflight log that
+	// would cause us to lose leadership (specifically a RemovePeer of
+	// ourselves). If this is the case, we must not allow any logs to
+	// be processed in parallel, otherwise we are basing commit on
+	// only a single peer (ourself) and replicating to an undefined set
+	// of peers.
+	stepDown := false
+
 	lease := time.After(r.conf.LeaderLeaseTimeout)
 	for r.getState() == Leader {
 		select {
@@ -908,13 +916,24 @@ func (r *Raft) leaderLoop() {
 			// Handle any peer set changes
 			n := len(ready)
 			for i := 0; i < n; i++ {
+				// Fail all future transactions once stepDown is on
+				if stepDown {
+					ready[i].respond(ErrNotLeader)
+					ready[i], ready[n-1] = ready[n-1], nil
+					n--
+					i--
+					continue
+				}
+
 				// Special case AddPeer and RemovePeer
 				log := ready[i]
 				if log.log.Type != LogAddPeer && log.log.Type != LogRemovePeer {
 					continue
 				}
 
-				// Check if this log should be ignored
+				// Check if this log should be ignored. The logs can be
+				// reordered here since we have not yet assigned an index
+				// and are not violating any promises.
 				if !r.preparePeerChange(log) {
 					ready[i], ready[n-1] = ready[n-1], nil
 					n--
@@ -922,8 +941,13 @@ func (r *Raft) leaderLoop() {
 					continue
 				}
 
-				// Apply peer set changes early
-				r.processLog(&log.log, nil, true)
+				// Apply peer set changes early and check if we will step
+				// down after the commit of this log. If so, we must not
+				// allow any future entries to make progress to avoid undefined
+				// behavior.
+				if ok := r.processLog(&log.log, nil, true); ok {
+					stepDown = true
+				}
 			}
 
 			// Nothing to do if all logs are invalid
@@ -1129,7 +1153,8 @@ func (r *Raft) processLogs(index uint64, future *logFuture) {
 }
 
 // processLog is invoked to process the application of a single committed log.
-func (r *Raft) processLog(l *Log, future *logFuture, precommit bool) {
+// Returns if this log entry would cause us to stepDown after it commits.
+func (r *Raft) processLog(l *Log, future *logFuture, precommit bool) (stepDown bool) {
 	switch l.Type {
 	case LogBarrier:
 		// Barrier is handled by the FSM
@@ -1158,8 +1183,18 @@ func (r *Raft) processLog(l *Log, future *logFuture, precommit bool) {
 		// If the peer set does not include us, remove all other peers
 		removeSelf := !PeerContained(peers, r.localAddr) && l.Type == LogRemovePeer
 		if removeSelf {
-			r.peers = nil
-			r.peerStore.SetPeers([]string{r.localAddr})
+			// Mark that this operation will cause us to step down as
+			// leader. This prevents the future logs from being Applied
+			// from this leader.
+			stepDown = true
+
+			// We only modify the peers after the commit, otherwise we
+			// would be using a quorum size of 1 for the RemovePeer operation.
+			// This is used with the stepDown guard to prevent any other logs.
+			if !precommit {
+				r.peers = nil
+				r.peerStore.SetPeers([]string{r.localAddr})
+			}
 		} else {
 			r.peers = ExcludePeer(peers, r.localAddr)
 			r.peerStore.SetPeers(peers)
@@ -1214,6 +1249,7 @@ func (r *Raft) processLog(l *Log, future *logFuture, precommit bool) {
 	if future != nil && !precommit {
 		future.respond(nil)
 	}
+	return
 }
 
 // processRPC is called to handle an incoming RPC request.
@@ -1258,9 +1294,10 @@ func (r *Raft) appendEntries(rpc RPC, a *AppendEntriesRequest) {
 	defer metrics.MeasureSince([]string{"raft", "rpc", "appendEntries"}, time.Now())
 	// Setup a response
 	resp := &AppendEntriesResponse{
-		Term:    r.getCurrentTerm(),
-		LastLog: r.getLastIndex(),
-		Success: false,
+		Term:           r.getCurrentTerm(),
+		LastLog:        r.getLastIndex(),
+		Success:        false,
+		NoRetryBackoff: false,
 	}
 	var rpcErr error
 	defer func() {
@@ -1297,6 +1334,7 @@ func (r *Raft) appendEntries(rpc RPC, a *AppendEntriesRequest) {
 			if err := r.logs.GetLog(a.PrevLogEntry, &prevLog); err != nil {
 				r.logger.Printf("[WARN] raft: Failed to get previous log: %d %v (last: %d)",
 					a.PrevLogEntry, err, lastIdx)
+				resp.NoRetryBackoff = true
 				return
 			}
 			prevLogTerm = prevLog.Term
@@ -1305,6 +1343,7 @@ func (r *Raft) appendEntries(rpc RPC, a *AppendEntriesRequest) {
 		if a.PrevLogTerm != prevLogTerm {
 			r.logger.Printf("[WARN] raft: Previous log term mis-match: ours: %d remote: %d",
 				prevLogTerm, a.PrevLogTerm)
+			resp.NoRetryBackoff = true
 			return
 		}
 	}
@@ -1540,13 +1579,18 @@ func (r *Raft) installSnapshot(rpc RPC, req *InstallSnapshotRequest) {
 	return
 }
 
+type voteResult struct {
+	RequestVoteResponse
+	voter string
+}
+
 // electSelf is used to send a RequestVote RPC to all peers,
 // and vote for ourself. This has the side affecting of incrementing
 // the current term. The response channel returned is used to wait
 // for all the responses (including a vote for ourself).
-func (r *Raft) electSelf() <-chan *RequestVoteResponse {
+func (r *Raft) electSelf() <-chan *voteResult {
 	// Create a response channel
-	respCh := make(chan *RequestVoteResponse, len(r.peers)+1)
+	respCh := make(chan *voteResult, len(r.peers)+1)
 
 	// Increment the term
 	r.setCurrentTerm(r.getCurrentTerm() + 1)
@@ -1564,8 +1608,8 @@ func (r *Raft) electSelf() <-chan *RequestVoteResponse {
 	askPeer := func(peer string) {
 		r.goFunc(func() {
 			defer metrics.MeasureSince([]string{"raft", "candidate", "electSelf"}, time.Now())
-			resp := new(RequestVoteResponse)
-			err := r.trans.RequestVote(peer, req, resp)
+			resp := &voteResult{voter: peer}
+			err := r.trans.RequestVote(peer, req, &resp.RequestVoteResponse)
 			if err != nil {
 				r.logger.Printf("[ERR] raft: Failed to make RequestVote RPC to %v: %v", peer, err)
 				resp.Term = req.Term
@@ -1599,9 +1643,12 @@ func (r *Raft) electSelf() <-chan *RequestVoteResponse {
 	}
 
 	// Include our own vote
-	respCh <- &RequestVoteResponse{
-		Term:    req.Term,
-		Granted: true,
+	respCh <- &voteResult{
+		RequestVoteResponse: RequestVoteResponse{
+			Term:    req.Term,
+			Granted: true,
+		},
+		voter: r.localAddr,
 	}
 	return respCh
 }

@@ -11,7 +11,7 @@
 		{
 			"importpath": "github.com/Sirupsen/logrus",
 			"repository": "https://github.com/Sirupsen/logrus",
-			"revision": "446d1c146faa8ed3f4218f056fcd165f6bcfda81",
+			"revision": "f7f79f729e0fbe2fcc061db48a9ba0263f588252",
 			"branch": "master"
 		},
 		{
@@ -47,14 +47,14 @@
 		{
 			"importpath": "github.com/docker/docker/pkg/discovery",
 			"repository": "https://github.com/docker/docker",
-			"revision": "d232ed4cea83a9f908b37012eea8627610a3d1ef",
+			"revision": "4b63689679089f7bb2286e7c330d6a7884c0aec3",
 			"branch": "master",
 			"path": "/pkg/discovery"
 		},
 		{
 			"importpath": "github.com/docker/engine-api",
 			"repository": "https://github.com/docker/engine-api",
-			"revision": "31b698aad77eafbef7e6a344a001038c46a68425",
+			"revision": "e98ada9b4fa351554aa7ee7cf857a2d6d26b1453",
 			"branch": "master"
 		},
 		{
@@ -85,7 +85,7 @@
 		{
 			"importpath": "github.com/fsouza/go-dockerclient",
 			"repository": "https://github.com/fsouza/go-dockerclient",
-			"revision": "593f9b9b8e59ae45ea4838781fef638e880be946",
+			"revision": "6fb38e6bb3d544d7eb5b55fd396cd4e6850802d8",
 			"branch": "master"
 		},
 		{
@@ -109,7 +109,7 @@
 		{
 			"importpath": "github.com/gorilla/websocket",
 			"repository": "https://github.com/gorilla/websocket",
-			"revision": "3986be78bf859e01f01af631ad76da5b269d270c",
+			"revision": "a2d85bcbfc8bbfed695b4f3c5b57e8b89911a727",
 			"branch": "master"
 		},
 		{
@@ -213,7 +213,7 @@
 		{
 			"importpath": "github.com/hashicorp/raft",
 			"repository": "https://github.com/hashicorp/raft",
-			"revision": "d136cd15dfb7876fd7c89cad1995bc4f19ceb294",
+			"revision": "b95f335efee1992886864389183ebda0c0a5d0f6",
 			"branch": "master"
 		},
 		{
@@ -231,14 +231,14 @@
 		{
 			"importpath": "github.com/hashicorp/serf/coordinate",
 			"repository": "https://github.com/hashicorp/serf",
-			"revision": "b60fe33be5c14bcfb4b23969bf2776cf26ca9d86",
+			"revision": "64d10e9428bd70dbcd831ad087573b66731c014b",
 			"branch": "master",
 			"path": "/coordinate"
 		},
 		{
 			"importpath": "github.com/hashicorp/serf/serf",
 			"repository": "https://github.com/hashicorp/serf",
-			"revision": "b60fe33be5c14bcfb4b23969bf2776cf26ca9d86",
+			"revision": "64d10e9428bd70dbcd831ad087573b66731c014b",
 			"branch": "master",
 			"path": "/serf"
 		},
