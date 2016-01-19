@@ -1,6 +1,5 @@
 # avast
 ...ye maties!
-...ya-harrrr!
 
 ![Avast](https://media.giphy.com/media/E8KFBhPh2s3ra/giphy.gif)
 
