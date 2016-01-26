@@ -1,21 +1,6 @@
-FROM alpine
-MAINTAINER Brett Fowle <brettfowle@gmail.com>
+FROM golang:1.5-onbuild
 
-ENV BUILD_PATH /go/src/github.com/bfowle/avast
-ENV BUILD_DEPS go git gcc libc-dev libgcc
-ENV PATH /go/bin:/usr/local/go/bin:$PATH
-ENV GOPATH /go:$BUILD_PATH/vendor
+EXPOSE 8080
 
-RUN apk --update add $BUILD_DEPS
-
-WORKDIR $BUILD_PATH
-COPY . $BUILD_PATH
-
-RUN go build -o /usr/bin/avast github.com/bfowle/avast/src/
-
-#RUN apk --update add $BUILD_DEPS && \
-#  cd $BUILD_PATH; go build -o /usr/bin/avast . && \
-#  apk del $BUILD_DEPS && \
-#  rm -rf /go /var/cache/apk/*
-
-ENTRYPOINT ["avast"]
+ENV AVAST_ADDR=:8080 AVAST_DATACENTER=dc1 DOCKER_API_VERSION=v1.21 \
+  DOCKER_HOST=tcp://dockerhost:3376 CONSUL_HTTP_ADDR=consulhost:8500
